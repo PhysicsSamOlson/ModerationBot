@@ -42,9 +42,14 @@ bot.on("messageCreate", async (msg) => {
     return
   msg.member.roles.indexOf(moderator) >= 0 ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
-    if (badToGood(msg.content) === true) {
+    let checkContent = msg.content.replace(/[\u007F-\uFFFF]\s*/g, "").toLowerCase().replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
+    if (badToGood(checkContent) === true) {
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
+    }
+    if (checkContent.length === 0) {
+      await msg.delete()
+      await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
     }
   }
   else if (moderators === true) {
