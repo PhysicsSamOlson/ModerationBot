@@ -1,13 +1,5 @@
 
 # Welcome to wordModBot for RP1
-This bot was created to make creating polls in your server very easy and to establish Mod Mail.<br>Along with these functions, this bot also offers Giveaway functionality.<br><br><!--See images of how polls look below<br><br>
-![](/images/poll.png)<br>
-![](/images/dm.png)<br>
-![](/images/close.png)<br>
-![](/images/mail.PNG)<br>
-![](/images/mailclose.PNG)<br>
-![](/images/giveaway.PNG)<br>
-![](/images/finishaway.PNG)<br>-->
 # Commands
   - !prefix
   - !del
