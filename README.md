@@ -1,9 +1,6 @@
 
 # Welcome to wordModBot for RP1
 # Commands
-  - !prefix
-  - !del
-# Syntax
   - !prefix newprefix
   - !del amountofmsgs
   - !rank [@user]
@@ -12,6 +9,7 @@
   - !mute @user
   - !unmute @user
   - !user-info @user
+  - !leaderboard
 # Install
   <div id="install">
   Git clone the repo
