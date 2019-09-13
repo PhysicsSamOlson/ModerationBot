@@ -17,7 +17,7 @@
  # After you install
   <ul>
   <li>Configure info.json with your bot token</li>
-  <li>Configure bot.js with the ID's of your moderators</li>
+  <li>Configure bot.js with the ID of your moderator role</li>
   <li>Run run.bat</li>
   <li>Congratulations, your bot is now online</li>
   </ul>
