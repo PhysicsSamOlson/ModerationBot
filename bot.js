@@ -53,7 +53,7 @@ bot.on("messageUpdate", async (message, oldMessage) => {
     return
   if (message.member.bot === true)
     return
-  let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordap.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
+  let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageDelete", async (message) => {
@@ -117,8 +117,8 @@ bot.on("messageCreate", async (msg) => {
   msg.mentions.length === 0 ? mentioned = false : mentioned = msg.mentions[0]
   if (mentioned !== false)
     mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
-  msg.content = msg.content.slice(prefix.length)
-  let command = msg.content.split(' ')[0]
+  let newMsg = msg.content.slice(prefix.length)
+  let command = newMsg.split(' ')[0]
   if (command === 'rank') {
     let embed;
     if (mentioned === false)
