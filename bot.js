@@ -24,11 +24,12 @@ SOFTWARE.
 const Eris = require("eris");
 const info = require('./info.json');
 const fs = require('fs')
+const xpSystem = require('./xpSystem.js')
 const bot = new Eris(info.token);
 const moderator = 'MOD ID' //mod role id here
 const muted = 'MUTED ID' //muted role id here
-const logChannel = 'CHANNEL ID' //channel for logging stuff
-const welcomeMessage = 'WELCOME MSG' //Your welcome message to new users here
+const logChannel = 'ARCHIVE CHANNEL' //channel for logging stuff
+const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users here
 bot.on("ready", () => {
   bot.editStatus({
     status: 'online',
@@ -40,7 +41,7 @@ bot.on("ready", () => {
 bot.on("error", console.error)
 bot.on("guildMemberAdd", async (guild, member) => {
   await bot.createMessage((await bot.getDMChannel(member.id)).id, welcomeMessage)
-  let embed = createEmbed('Member join', `<@!${member.id}> has joined ${guild.name}`, 'Logger', bot)
+  let embed = createEmbedFields(null, member, [{ name: 'Member Joined', value: `<@!${member.id}> has joined ${guild.name}` }, { name: 'Account Creation Date', value: new Date(member.createdAt).toString() }], `ID: ${member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("guildMemberRemove", async (guild, member) => {
@@ -52,13 +53,13 @@ bot.on("messageUpdate", async (message, oldMessage) => {
     return
   if (message.member.bot === true)
     return
-  let embed = createEmbed('Message edit', `Sent by <@!${message.member.id}>\n**Old Message:**\n${oldMessage.content}\n **New Message:**\n${message.content}`, 'Logger', bot)
+  let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordap.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageDelete", async (message) => {
   if (message.channel.guild == null)
     return
-  let embed = createEmbed('Message delete', `Message deleted sent by <@!${message.member.id}>:**\n${message.content}**`, 'Logger', bot)
+  let embed = createEmbedFields(`**Message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
@@ -74,34 +75,61 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
 bot.on("messageCreate", async (msg) => {
   if (msg.author.bot === true)
     return
-  let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
-  let prefix = info.prefix
   if (msg.member == null)
     return
+  let userXp = JSON.parse(xpSystem.userXp)
+  let randomNum = Math.random(); let amountofXp;
+  randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
+  if (userXp[msg.author.id] == null) {
+    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 }
+    xpSystem.updateUserXp(userXp)
+  }
+  if ((Date.now() - userXp[msg.author.id]['time']) > 60000) {
+    let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
+    if ((userXp[msg.author.id]['xp'] + amountofXp) >= xp2lvl) {
+      xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * userXp[msg.author.id]['lvl'] + 1 + 100;
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: xp2lvl }
+      await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
+    } else
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: xp2lvl }
+    xpSystem.updateUserXp(userXp)
+  }
+  let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
+  let prefix = info.prefix
   msg.member.roles.indexOf(moderator) >= 0 ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
-    let checkContent = msg.content.replace(/[\u007F-\uFFFF]\s*/g, "").toLowerCase().replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
-    let embed;
+    let checkContent = msg.content.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
+    let embed; let checkChars = msg.content.match(/(?:[\p{M}]{1})([\p{M}])+?/uisg)
     if (badToGood(checkContent) === true) {
       embed = createEmbed('Word censor', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
       await bot.createMessage(logChannel, { embed })
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
     }
-    if (checkContent.length === 0) {
+    if (checkChars !== null) {
       embed = createEmbed('Wierd font moderation', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
       await bot.createMessage(logChannel, { embed })
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
     }
   }
-  else if (moderators === true) {
-    let mentioned; let mentionedNickName;
-    msg.mentions.length === 0 ? mentioned = false : mentioned = msg.mentions[0]
-    if (mentioned !== false)
-      mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
-    msg.content = msg.content.slice(prefix.length)
-    let command = msg.content.split(' ')[0]
+  let mentioned; let mentionedNickName;
+  msg.mentions.length === 0 ? mentioned = false : mentioned = msg.mentions[0]
+  if (mentioned !== false)
+    mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
+  msg.content = msg.content.slice(prefix.length)
+  let command = msg.content.split(' ')[0]
+  if (command === 'rank') {
+    let embed;
+    if (mentioned === false)
+      embed = createEmbedFields(null, msg.member, [{ name: 'Rank Card', value: `You currently have ${userXp[msg.author.id]['xp']} xp and need ${(userXp[msg.author.id]['xpToLvl'] - userXp[msg.author.id]['xp'])} more xp to level up` }, { name: 'Level', value: userXp[msg.author.id]['lvl'] }], 'XpSystem', true)
+    else if (userXp[mentioned.id] == null)
+      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: 'They have not yet started to gain xp' }, { name: 'Level', value: 'Unranked' }])
+    else
+      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'] - userXp[mentioned.id]['xp'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
+    await msg.channel.createMessage({ embed })
+  }
+  if (moderators === true) {
     if (command === 'prefix') {
       if (msg.content.split(' ').length != 2)
         return bot.createMessage(msg.channel.id, `The syntax is ${prefix}prefix newprefix`)
@@ -130,6 +158,25 @@ bot.on("messageCreate", async (msg) => {
       let embed = createEmbed('User banned', `${mentionedNickName} has been banned`, 'Banhammer', bot)
       await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
       return await msg.channel.createMessage({ embed })
+    }
+    if (command === 'user-info') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      let discordJoinDate = new Date(mentioned.createdAt).toString(); let serverJoinDate = new Date(msg.mentions[0].joinedAt).toString()
+      let embedFields = [{ name: 'Joined Discord at', value: discordJoinDate }, { name: 'Joined Server at', value: serverJoinDate }]
+      let embed = {
+        color: 0x6ade89,
+        timestamp: new Date(),
+        fields: embedFields,
+        thumbnail: {
+          url: mentioned.avatarURL
+        },
+        footer: {
+          icon_url: bot.user.avatarURL,
+          text: 'User Info'
+        }
+      }
+      msg.channel.createMessage({ embed })
     }
     if (command === 'unban') {
       if (msg.content.split(' ').length < 2)
@@ -175,6 +222,29 @@ function createEmbed(title, content, footerText, bot) {
   }
   return embedMessageDefault
 }
+function createEmbedFields(content, member, fields, footerText, boolean) {
+
+  let embedMessageDefault = {
+    author: {
+      name: `${member.username}#${member.discriminator}`,
+      icon_url: member.avatarURL
+    },
+    thumbnail: {
+      url: member.avatarURL
+    },
+    color: 0x6ade89,
+    timestamp: new Date(),
+    fields: fields,
+    footer: {
+      text: footerText
+    }
+  }
+  if (content != null)
+    embedMessageDefault['description'] = content
+  if (boolean === true)
+    delete embedMessageDefault['thumbnail']
+  return embedMessageDefault
+}
 async function updatePrefix(prefix, info) {
   info.prefix = prefix
   let jsonMsg = {
@@ -183,4 +253,7 @@ async function updatePrefix(prefix, info) {
   }
   await fs.writeFile("./info.json", JSON.stringify(jsonMsg, null, 2), (error) => { if (error != null) { console.error(error) } })
 }
-bot.connect()
+(async () => {
+  await bot.connect();
+  await xpSystem.load();
+})().catch(console.error);
