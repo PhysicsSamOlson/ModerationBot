@@ -89,8 +89,6 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
-  if (msg.channel.id !== '592445476012294144')
-    return
   if (msg.author.bot === true)
     return
   if (msg.member == null)
