@@ -81,17 +81,17 @@ bot.on("messageCreate", async (msg) => {
   let randomNum = Math.random(); let amountofXp;
   randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
   if (userXp[msg.author.id] == null) {
-    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 }
+    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100, user: `${msg.author.username}#${msg.author.discriminator}` }
     xpSystem.updateUserXp(userXp)
   }
   if ((Date.now() - userXp[msg.author.id]['time']) > 60000) {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
     if ((userXp[msg.author.id]['xp'] + amountofXp) >= xp2lvl) {
       xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * userXp[msg.author.id]['lvl'] + 1 + 100;
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: xp2lvl }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: xp2lvl, user: `${msg.author.username}#${msg.author.discriminator}` }
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: xp2lvl }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: xp2lvl, user: `${msg.author.username}#${msg.author.discriminator}` }
     xpSystem.updateUserXp(userXp)
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
@@ -129,6 +129,28 @@ bot.on("messageCreate", async (msg) => {
       embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'] - userXp[mentioned.id]['xp'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
     await msg.channel.createMessage({ embed })
   }
+  if (command === 'leaderboard') {
+    let leaderboard = []
+    let messageArr = ['#', 'XP', 'User']; let message = '``';
+    for (let j in messageArr)
+      message += ' | ' + messageArr[j]
+    message += '\n'
+    Object.keys(userXp).forEach(user => {
+      leaderboard.push(userXp[user])
+    })
+    leaderboard.sort((a, b) => b.xp - a.xp)
+    leaderboard = leaderboard.slice(0, 10)
+    let top10 = message
+    for (let i = 0; i < 10 && i < leaderboard.length; i++) {
+      let rank = (Number(i) + 1).toString().padStart(2, '\u2000')
+      leaderboard[i].xp = (leaderboard[i].xp.toString()).padStart(4, '\u2000')
+      top10 += `|${rank}  |${leaderboard[i].xp}|${leaderboard[i].user}\n`
+    }
+    top10 += '``'
+    let embed = createEmbed('XP Leaderboard', top10, 'Leaderboard', bot)
+    return msg.channel.createMessage({ embed })
+
+  }
   if (moderators === true) {
     if (command === 'prefix') {
       if (msg.content.split(' ').length != 2)
@@ -162,7 +184,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'user-info') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      let discordJoinDate = new Date(mentioned.createdAt).toString(); let serverJoinDate = new Date(msg.mentions[0].joinedAt).toString()
+      let discordJoinDate = new Date(mentioned.createdAt).toString(); let serverJoinDate = new Date(msg.channel.guild.members.get(msg.mentions[0].id).joinedAt).toString()
       let embedFields = [{ name: 'Joined Discord at', value: discordJoinDate }, { name: 'Joined Server at', value: serverJoinDate }]
       let embed = {
         color: 0x6ade89,
