@@ -26,7 +26,7 @@ const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
 const bot = new Eris(info.token);
-const moderator = 'MOD ID' //mod role id here
+const moderator = ['ROLE 1', 'ROLE 2'] //mod role ids here as array
 const muted = 'MUTED ID' //muted role id here
 const logChannel = 'ARCHIVE CHANNEL' //channel for logging stuff
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users here
@@ -42,7 +42,13 @@ bot.on("error", console.error)
 bot.on("guildMemberAdd", async (guild, member) => {
   await bot.createMessage((await bot.getDMChannel(member.id)).id, welcomeMessage)
   let embed = createEmbedFields(null, member, [{ name: 'Member Joined', value: `<@!${member.id}> has joined ${guild.name}` }, { name: 'Account Creation Date', value: new Date(member.createdAt).toString() }], `ID: ${member.id}`, false)
+  if (JSON.parse(xpSystem.userXp)[member.id] != null)
+    embed.fields.push({ name: 'Returning user', value: 'This is a returning user' })
   await bot.createMessage(logChannel, { embed })
+  if (nicknameCheck(member.username, checkForMod(member, moderator))) {
+    await member.edit({ nick: 'FuzzySquirrel' + Math.floor(Math.random() * 1000) })
+    await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
+  }
 })
 bot.on("guildMemberRemove", async (guild, member) => {
   let embed = createEmbed('Member leave', `<@!${member.id}> has left ${guild.name}`, 'Logger', bot)
@@ -51,10 +57,16 @@ bot.on("guildMemberRemove", async (guild, member) => {
 bot.on("messageUpdate", async (message, oldMessage) => {
   if (message.channel.guild == null)
     return
-  if (message.member.bot === true)
+  if (message.author.bot === true)
     return
   let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
+  if (badToGood(message.content, checkForMod(member, moderator)) || checkFontChar(message.content, checkForMod(member, moderator))) {
+    embed = createEmbed('Word censor', `${message.member.username}#${message.member.discriminator}\'s message got deleted:\n**${message.content}**`, 'Moderation', bot)
+    await bot.createMessage(logChannel, { embed })
+    await message.delete()
+    await bot.createMessage((await bot.getDMChannel(message.member.id)).id, 'You have been moderated, that word is not allowed here!')
+  }
 })
 bot.on("messageDelete", async (message) => {
   if (message.channel.guild == null)
@@ -69,10 +81,16 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   oldMember.nick == null ? oldMember.nick = member.username : oldMember.nick = oldMember.nick
   if (oldMember.nick === nickName)
     return
-  let embed = createEmbed('Name change', `<@!${member.id}> changed their name from ${oldMember.nick} to ${nickName}`, 'Logger', bot)
+  if (nicknameCheck(nickName, checkForMod(member, moderator))) {
+    await member.edit({ nick: oldMember.nick })
+    await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
+  }
+  let embed = createEmbedFields(null, member, [{ name: 'Name Change', value: `<@!${member.id}> changed their name from ${oldMember.nick}#${member.discriminator} to ${nickName}#${member.discriminator}` }], 'Logger', true)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
+  if (msg.channel.id !== '592445476012294144')
+    return
   if (msg.author.bot === true)
     return
   if (msg.member == null)
@@ -81,32 +99,32 @@ bot.on("messageCreate", async (msg) => {
   let randomNum = Math.random(); let amountofXp;
   randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
   if (userXp[msg.author.id] == null) {
-    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100, user: `${msg.author.username}#${msg.author.discriminator}` }
+    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}` }
     xpSystem.updateUserXp(userXp)
   }
   if ((Date.now() - userXp[msg.author.id]['time']) > 60000) {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
-    if ((userXp[msg.author.id]['xp'] + amountofXp) >= xp2lvl) {
-      xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * userXp[msg.author.id]['lvl'] + 1 + 100;
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: xp2lvl, user: `${msg.author.username}#${msg.author.discriminator}` }
+    if ((userXp[msg.author.id]['xp'] + amountofXp) >= userXp[msg.author.id]['totalXP']) {
+      xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * (userXp[msg.author.id]['lvl'] + 1) + 100;
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}` }
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: xp2lvl, user: `${msg.author.username}#${msg.author.discriminator}` }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}` }
     xpSystem.updateUserXp(userXp)
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
   let prefix = info.prefix
-  msg.member.roles.indexOf(moderator) >= 0 ? moderators = true : moderators = false
+  checkForMod(msg.member, moderator) ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
     let checkContent = msg.content.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
-    let embed; let checkChars = msg.content.match(/(?:[\p{M}]{1})([\p{M}])+?/uisg)
-    if (badToGood(checkContent) === true) {
+    let embed; let checkChars = checkFontChar(msg.content, moderators)
+    if (badToGood(checkContent, moderators) === true) {
       embed = createEmbed('Word censor', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
       await bot.createMessage(logChannel, { embed })
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
     }
-    if (checkChars !== null) {
+    if (checkChars === true) {
       embed = createEmbed('Wierd font moderation', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
       await bot.createMessage(logChannel, { embed })
       await msg.delete()
@@ -122,11 +140,11 @@ bot.on("messageCreate", async (msg) => {
   if (command === 'rank') {
     let embed;
     if (mentioned === false)
-      embed = createEmbedFields(null, msg.member, [{ name: 'Rank Card', value: `You currently have ${userXp[msg.author.id]['xp']} xp and need ${(userXp[msg.author.id]['xpToLvl'] - userXp[msg.author.id]['xp'])} more xp to level up` }, { name: 'Level', value: userXp[msg.author.id]['lvl'] }], 'XpSystem', true)
+      embed = createEmbedFields(null, msg.member, [{ name: 'Rank Card', value: `You currently have ${userXp[msg.author.id]['xp']} xp and need ${(userXp[msg.author.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[msg.author.id]['lvl'] }], 'XpSystem', true)
     else if (userXp[mentioned.id] == null)
       embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: 'They have not yet started to gain xp' }, { name: 'Level', value: 'Unranked' }])
     else
-      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'] - userXp[mentioned.id]['xp'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
+      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
     await msg.channel.createMessage({ embed })
   }
   if (command === 'leaderboard') {
@@ -225,11 +243,34 @@ bot.on("messageCreate", async (msg) => {
   }
 
 })
-function badToGood(word) {
+function badToGood(word, moderators) {
+  if (moderators)
+    return false
+  word = word.toLowerCase()
   let badwords = ['bad', 'words', 'as', 'array', 'strings']
+  let checker = false;
   if (badwords.some(bad => word.includes(bad)))
-    return true;
-  return false;
+    checker = true;
+  return checker;
+}
+function nicknameCheck(word, moderators) {
+  if (moderators)
+    return false
+  word = word.toLowerCase()
+  let badwords = ['rp1']
+  let checker = false;
+  if (badwords.some(bad => word.includes(bad)))
+    checker = true;
+  return checker;
+}
+function checkFontChar(phrase, moderators) {
+  if (moderators)
+    return false
+  let check = phrase.match(/(?:[\p{M}]{1})([\p{M}])+?/uisg)
+  if (check == null)
+    return false
+  else
+    return true
 }
 function createEmbed(title, content, footerText, bot) {
   let embedMessageDefault = {
@@ -243,6 +284,14 @@ function createEmbed(title, content, footerText, bot) {
     }
   }
   return embedMessageDefault
+}
+function checkForMod(member, moderator) {
+  let checker = false
+  moderator.forEach(role => {
+    if (member.roles.indexOf(role) >= 0)
+      checker = true
+  })
+  return checker
 }
 function createEmbedFields(content, member, fields, footerText, boolean) {
 
