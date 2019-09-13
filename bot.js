@@ -51,7 +51,7 @@ bot.on("guildMemberAdd", async (guild, member) => {
   }
 })
 bot.on("guildMemberRemove", async (guild, member) => {
-  let embed = createEmbed('Member leave', `<@!${member.id}> has left ${guild.name}`, 'Logger', bot)
+  let embed = createEmbedFields(null, member, [{ name: 'Member Left', value: `<@!${member.id}> has left ${guild.name}` }], `ID: ${member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageUpdate", async (message, oldMessage) => {
@@ -190,13 +190,6 @@ bot.on("messageCreate", async (msg) => {
         }, 60000)
       })
     }
-    if (command === 'ban') {
-      if (mentioned === false)
-        return await msg.channel.createMessage('You need to specify an user')
-      let embed = createEmbed('User banned', `${mentionedNickName} has been banned`, 'Banhammer', bot)
-      await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
-      return await msg.channel.createMessage({ embed })
-    }
     if (command === 'user-info') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
@@ -216,27 +209,52 @@ bot.on("messageCreate", async (msg) => {
       }
       msg.channel.createMessage({ embed })
     }
+    if (command === 'ban') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      try {
+        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been banned by ${nickName}`, 'Banhammer', bot)
+        await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
+        return await msg.channel.createMessage({ embed })
+      } catch { await msg.channel.createMessage('I do not have permissions to ban that user') }
+    }
+
     if (command === 'unban') {
       if (msg.content.split(' ').length < 2)
         return await msg.channel.createMessage(`The syntax is ${prefix}unban USERID`)
       let unbannedUser = msg.content.split(' ').slice(1).join(' ')
-      let embed = createEmbed('User banned', `<@!${unbannedUser}> has been unbanned`, 'Banhammer', bot)
-      await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, 7, `Unbanned by ${nickName}`)
-      return await msg.channel.createMessage({ embed })
+      let embed = createEmbed('User Unbanned', `<@!${unbannedUser}> has been unbanned by ${nickName}`, 'Banhammer', bot)
+      try {
+        await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, 7, `Unbanned by ${nickName}`)
+        return await msg.channel.createMessage({ embed })
+      } catch { await msg.channel.createMessage('That user is not banned') }
     }
     if (command === 'mute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
-      let embed = createEmbed('User Muted', `${mentionedNickName} has been muted`, 'MuteHammer', bot)
-      return await msg.channel.createMessage({ embed })
+      try {
+        await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
+        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been muted by ${nickName}`, 'Mutehammer', bot)
+        return await msg.channel.createMessage({ embed })
+      } catch { await msg.channel.createMessage('I do not have permissions to mute this user') }
     }
     if (command === 'unmute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
-      let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted`, 'MuteHammer', bot)
-      return await msg.channel.createMessage({ embed })
+      try {
+        await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
+        let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted by ${nickName}`, 'Mutehammer', bot)
+        return await msg.channel.createMessage({ embed })
+      } catch { await msg.channel.createMessage('I do not have permissions to unmute this user') }
+    }
+    if (command === 'kick') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      try {
+        await msg.channel.guild.members.get(mentioned.id).kick(`Kicked by ${nickName}`)
+        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been kicked by ${nickName}`, 'Kickhammer', bot)
+        return await msg.channel.createMessage({ embed })
+      } catch { await msg.channel.createMessage('That user cannot be kicked') }
     }
   }
 
