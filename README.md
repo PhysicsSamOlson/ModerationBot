@@ -1,5 +1,6 @@
 
-# Welcome to wordModBot for RP1
+# Welcome to ModerationBot
+Xp system and Moderation Bot to secure your server
 # Commands
   - !prefix newprefix
   - !del amountofmsgs
