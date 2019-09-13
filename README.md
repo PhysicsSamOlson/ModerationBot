@@ -6,6 +6,12 @@
 # Syntax
   - !prefix newprefix
   - !del amountofmsgs
+  - !rank [@user]
+  - !ban @user
+  - !unban USERID
+  - !mute @user
+  - !unmute @user
+  - !user-info @user
 # Install
   <div id="install">
   Git clone the repo
