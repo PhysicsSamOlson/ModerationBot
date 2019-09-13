@@ -26,12 +26,12 @@ const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
 const bot = new Eris(info.token);
-const moderator = ['ROLE 1', 'ROLE 2'] //mod role ids here as array
+const moderator = ['ROLE 1', 'ROLE 2', 'ETC'] //mod role ids here as array
 const muted = 'MUTED ID' //muted role id here
 const logChannel = 'ARCHIVE CHANNEL' //channel for logging stuff
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users here
-bot.on("ready", () => {
-  bot.editStatus({
+bot.on("ready", async () => {
+  await bot.editStatus({
     status: 'online',
     game: null,
     name: `the chat`,
@@ -55,13 +55,17 @@ bot.on("guildMemberRemove", async (guild, member) => {
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageUpdate", async (message, oldMessage) => {
-  if (message.channel.guild == null)
+  if (message == null || message.channel.guild == null || message.author.bot === true || oldMessage == null)
     return
-  if (message.author.bot === true)
-    return
+  let fullMsg = message.content.slice()
+  if (oldMessage.content.length > 1000)
+    oldMessage.content = oldMessage.content.slice(0, 1000) + '...'
+  if (message.content.length > 1000) {
+    message.content = message.content.slice(0, 1000) + '...'
+  }
   let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
-  if (badToGood(message.content, checkForMod(member, moderator)) || checkFontChar(message.content, checkForMod(member, moderator))) {
+  if (badToGood(fullMsg, checkForMod(message.member, moderator)) || checkFontChar(fullMsg, checkForMod(message.member, moderator))) {
     embed = createEmbed('Word censor', `${message.member.username}#${message.member.discriminator}\'s message got deleted:\n**${message.content}**`, 'Moderation', bot)
     await bot.createMessage(logChannel, { embed })
     await message.delete()
@@ -69,8 +73,10 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   }
 })
 bot.on("messageDelete", async (message) => {
-  if (message.channel.guild == null)
+  if (message.channel.guild == null || message == null || message.content == null)
     return
+  if (message.content.length > 1000)
+    message.content = message.content.slice(0, 1000) + '...'
   let embed = createEmbedFields(`**Message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
@@ -89,9 +95,7 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
-  if (msg.author.bot === true)
-    return
-  if (msg.member == null)
+  if (msg.member == null || msg.author.bot === true)
     return
   let userXp = JSON.parse(xpSystem.userXp)
   let randomNum = Math.random(); let amountofXp;
@@ -116,6 +120,8 @@ bot.on("messageCreate", async (msg) => {
   if (msg.content.substring(0, prefix.length) !== prefix) {
     let checkContent = msg.content.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
     let embed; let checkChars = checkFontChar(msg.content, moderators)
+    if (msg.content.length > 2000)
+      msg.content = msg.content.slice(0, 1800)+'...'
     if (badToGood(checkContent, moderators) === true) {
       embed = createEmbed('Word censor', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
       await bot.createMessage(logChannel, { embed })
@@ -180,9 +186,9 @@ bot.on("messageCreate", async (msg) => {
         x[1] = '50' //default amount of msgs to delete is 50 if nothing is specified
       x[1] = Math.floor(Number(x[1]))
       if (x[1] > 100)
-        return bot.createMessage(msg.channel.id, 'Sorry I can only delete up to 100 messages at a time')
+        return await bot.createMessage(msg.channel.id, 'Sorry I can only delete up to 100 messages at a time')
       if (isNaN(x[1]) || Math.sign(x[1]) === -1 || Number(x[1]) === 0)
-        return bot.createMessage(msg.channel.id, 'Invalid amount of messages to delete')
+        return await bot.createMessage(msg.channel.id, 'Invalid amount of messages to delete')
       await msg.channel.purge(x[1])
       await bot.createMessage(msg.channel.id, x[1] + ' messages have been deleted').then(function (response) {
         setTimeout(async function () {
