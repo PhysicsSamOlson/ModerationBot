@@ -148,7 +148,7 @@ bot.on("messageCreate", async (msg) => {
     }
     top10 += '``'
     let embed = createEmbed('XP Leaderboard', top10, 'Leaderboard', bot)
-    return msg.channel.createMessage({ embed })
+    return await msg.channel.createMessage({ embed })
 
   }
   if (moderators === true) {
