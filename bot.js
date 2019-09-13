@@ -72,6 +72,8 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
+  if (msg.author.bot === true)
+    return
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
   let prefix = info.prefix
   if (msg.member == null)
@@ -79,13 +81,16 @@ bot.on("messageCreate", async (msg) => {
   msg.member.roles.indexOf(moderator) >= 0 ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
     let checkContent = msg.content.replace(/[\u007F-\uFFFF]\s*/g, "").toLowerCase().replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
+    let embed;
     if (badToGood(checkContent) === true) {
-      await bot.createMessage(logChannel, createEmbed('Word censor', `${nickName} message got deleted \`\`\`${msg.content}\`\`\``, 'Moderation', bot))
+      embed = createEmbed('Word censor', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
+      await bot.createMessage(logChannel, { embed })
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
     }
     if (checkContent.length === 0) {
-      await bot.createMessage(logChannel, createEmbed('Wierd font moderation', `${nickName} message got deleted \`\`\`${msg.content}\`\`\``, 'Moderation', bot))
+      embed = createEmbed('Wierd font moderation', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
+      await bot.createMessage(logChannel, { embed })
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
     }
