@@ -25,18 +25,54 @@ const Eris = require("eris");
 const info = require('./info.json');
 const fs = require('fs')
 const bot = new Eris(info.token);
-const moderator = 'ROLE ID' //mod role id here
+const moderator = 'MOD ID' //mod role id here
+const muted = 'MUTED ID' //muted role id here
+const logChannel = 'CHANNEL ID' //channel for logging stuff
+const welcomeMessage = 'WELCOME MSG' //Your welcome message to new users here
 bot.on("ready", () => {
   bot.editStatus({
     status: 'online',
     game: null,
     name: `the chat`,
     type: 2
-  })
+  }) //changing name wont cause errors, be careful with the rest
 });
 bot.on("error", console.error)
-
+bot.on("guildMemberAdd", async (guild, member) => {
+  await bot.createMessage((await bot.getDMChannel(member.id)).id, welcomeMessage)
+  let embed = createEmbed('Member join', `<@!${member.id}> has joined ${guild.name}`, 'Logger', bot)
+  await bot.createMessage(logChannel, { embed })
+})
+bot.on("guildMemberRemove", async (guild, member) => {
+  let embed = createEmbed('Member leave', `<@!${member.id}> has left ${guild.name}`, 'Logger', bot)
+  await bot.createMessage(logChannel, { embed })
+})
+bot.on("messageUpdate", async (message, oldMessage) => {
+  if (message.channel.guild == null)
+    return
+  if (message.member.bot === true)
+    return
+  let embed = createEmbed('Message edit', `Sent by <@!${message.member.id}>\n**Old Message:**\n${oldMessage.content}\n **New Message:**\n${message.content}`, 'Logger', bot)
+  await bot.createMessage(logChannel, { embed })
+})
+bot.on("messageDelete", async (message) => {
+  if (message.channel.guild == null)
+    return
+  let embed = createEmbed('Message delete', `Message deleted sent by <@!${message.member.id}>:**\n${message.content}**`, 'Logger', bot)
+  await bot.createMessage(logChannel, { embed })
+})
+bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
+  if (member.bot === true)
+    return
+  let nickName; member.nick == null ? nickName = member.username : nickName = member.nick
+  oldMember.nick == null ? oldMember.nick = member.username : oldMember.nick = oldMember.nick
+  if (oldMember.nick === nickName)
+    return
+  let embed = createEmbed('Name change', `<@!${member.id}> changed their name from ${oldMember.nick} to ${nickName}`, 'Logger', bot)
+  await bot.createMessage(logChannel, { embed })
+})
 bot.on("messageCreate", async (msg) => {
+  let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
   let prefix = info.prefix
   if (msg.member == null)
     return
@@ -44,15 +80,21 @@ bot.on("messageCreate", async (msg) => {
   if (msg.content.substring(0, prefix.length) !== prefix) {
     let checkContent = msg.content.replace(/[\u007F-\uFFFF]\s*/g, "").toLowerCase().replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
     if (badToGood(checkContent) === true) {
+      await bot.createMessage(logChannel, createEmbed('Word censor', `${nickName} message got deleted \`\`\`${msg.content}\`\`\``, 'Moderation', bot))
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
     }
     if (checkContent.length === 0) {
+      await bot.createMessage(logChannel, createEmbed('Wierd font moderation', `${nickName} message got deleted \`\`\`${msg.content}\`\`\``, 'Moderation', bot))
       await msg.delete()
       await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
     }
   }
   else if (moderators === true) {
+    let mentioned; let mentionedNickName;
+    msg.mentions.length === 0 ? mentioned = false : mentioned = msg.mentions[0]
+    if (mentioned !== false)
+      mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
     msg.content = msg.content.slice(prefix.length)
     let command = msg.content.split(' ')[0]
     if (command === 'prefix') {
@@ -77,6 +119,35 @@ bot.on("messageCreate", async (msg) => {
         }, 60000)
       })
     }
+    if (command === 'ban') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      let embed = createEmbed('User banned', `${mentionedNickName} has been banned`, 'Banhammer', bot)
+      await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
+      return await msg.channel.createMessage({ embed })
+    }
+    if (command === 'unban') {
+      if (msg.content.split(' ').length < 2)
+        return await msg.channel.createMessage(`The syntax is ${prefix}unban USERID`)
+      let unbannedUser = msg.content.split(' ').slice(1).join(' ')
+      let embed = createEmbed('User banned', `<@!${unbannedUser}> has been unbanned`, 'Banhammer', bot)
+      await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, 7, `Unbanned by ${nickName}`)
+      return await msg.channel.createMessage({ embed })
+    }
+    if (command === 'mute') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
+      let embed = createEmbed('User Muted', `${mentionedNickName} has been muted`, 'MuteHammer', bot)
+      return await msg.channel.createMessage({ embed })
+    }
+    if (command === 'unmute') {
+      if (mentioned === false)
+        return await msg.channel.createMessage('You need to specify an user')
+      await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
+      let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted`, 'MuteHammer', bot)
+      return await msg.channel.createMessage({ embed })
+    }
   }
 
 })
@@ -85,6 +156,19 @@ function badToGood(word) {
   if (badwords.some(bad => word.includes(bad)))
     return true;
   return false;
+}
+function createEmbed(title, content, footerText, bot) {
+  let embedMessageDefault = {
+    title: title,
+    color: 0x6ade89,
+    timestamp: new Date(),
+    description: content,
+    footer: {
+      icon_url: bot.user.avatarURL,
+      text: footerText
+    }
+  }
+  return embedMessageDefault
 }
 async function updatePrefix(prefix, info) {
   info.prefix = prefix
