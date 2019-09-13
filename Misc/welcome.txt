@@ -1,0 +1,32 @@
+```
+  ___             
+ / _ \            
+/ /_\ \ _ __  ___ 
+|  _  || '__|/ __|
+| | | || |  | (__ 
+\_| |_/|_|   \___|
+___  ___                         
+|  \/  |                         
+| .  . |  __ _   __ _   ___  ___ 
+| |\/| | / _` | / _` | / _ \/ __|
+| |  | || (_| || (_| ||  __/\__ \
+\_|  |_/ \__,_| \__, | \___||___/
+                 __/ |           
+                |___/            
+Alpha Build
+```
+**__Welcome to the ArcMages discord server__**
+**[** #welcome **]** General information about the RP1 team, and the ArcMages project
+**[** #announcements **]** Important announcements regarding the project
+**[** #faq-and-rules **]** Frequently asked questions, & server rules
+**[** #play-now **]** Download the client and play ArcMages here!
+
+**[** #rank-selection **]** Choose different desired discord ranks
+
+**[** #general-arcmages-14 **]** General discussion
+**[** #general-arcmages-15 **]** Overflow general discussion
+**[** #room-creation **]** Create a room in the client, and post it here to get players!
+**[** #warzone **]** Nonsense chat, memes, etc. Rules still apply here.
+
+**If you would like to support this project financially, we have a Patreon linked below**: 
+<https://www.patreon.com/user?u=13357242>
