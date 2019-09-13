@@ -3,10 +3,11 @@
 Xp system and Moderation Bot to secure your server
 # Commands
   - !prefix newprefix
-  - !del amountofmsgs
+  - !del [amountofmsgs] (default 50)
   - !rank [@user]
   - !ban @user
   - !unban USERID
+  - !kick @user
   - !mute @user
   - !unmute @user
   - !user-info @user
@@ -23,6 +24,7 @@ Xp system and Moderation Bot to secure your server
   <ul>
   <li>Configure info.json with your bot token</li>
   <li>Configure bot.js with the IDs in the first few lines of code</li>
+  <li>Scroll down to the bottom, and configure the two functions that moderate censored words and nicknames</li>
   <li>Run run.bat</li>
   <li>Congratulations, your bot is now online</li>
   </ul>
