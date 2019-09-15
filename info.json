@@ -1,4 +1,7 @@
 {
   "token": "YOUR BOT TOKEN",
-  "prefix": "!"
+  "prefix": "!",
+  "muted": "MUTED ROLE ID",
+  "logChannel": "ARCHIVE CHANNEL ID",
+  "moderators": ["Array", "of", "moderator", "role", "IDS"]
 }
