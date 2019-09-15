@@ -29,6 +29,8 @@ const bot = new Eris(info.token);
 const moderator = info.moderators //edit these
 const muted = info.muted //in 
 const logChannel = info.logChannel //info.json
+const censoredWords = info.censoredWords
+const censoredUsernames = info.censoredUsernames
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users located here
 bot.on("ready", async () => {
   await bot.editStatus({
@@ -280,9 +282,8 @@ function badToGood(word, moderators) {
   if (moderators)
     return false
   word = word.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
-  let badwords = ['bad', 'words', 'as', 'array', 'strings']
   let checker = false;
-  if (badwords.some(bad => word.includes(bad)))
+  if (censoredWords.some(bad => word.includes(bad)))
     checker = true;
   return checker;
 }
@@ -290,9 +291,8 @@ function nicknameCheck(word, moderators) {
   if (moderators)
     return false
   word = word.toLowerCase()
-  let badwords = ['moderated', 'usernames', 'as', 'an', 'array']
   let checker = false;
-  if (badwords.some(bad => word.includes(bad)))
+  if (censoredUsernames.some(bad => word.includes(bad)))
     checker = true;
   return checker;
 }
