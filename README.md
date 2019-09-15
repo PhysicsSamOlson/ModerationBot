@@ -22,9 +22,7 @@ Xp system and Moderation Bot to secure your server
   
  # After you install
   <ul>
-  <li>Configure info.json with your bot token</li>
-  <li>Configure bot.js with the IDs in the first few lines of code</li>
-  <li>Scroll down to the bottom, and configure the two functions that moderate censored words and nicknames</li>
+  <li>Configure info.json with your bot token, moderator/muted/logChannel ids, and censored words / nicknames</li>
   <li>Run run.bat</li>
   <li>Congratulations, your bot is now online</li>
   </ul>
