@@ -26,10 +26,10 @@ const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
 const bot = new Eris(info.token);
-const moderator = ['ROLE 1', 'ROLE 2', 'ETC'] //mod role ids here as array
-const muted = 'MUTED ID' //muted role id here
-const logChannel = 'ARCHIVE CHANNEL' //channel for logging stuff
-const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users here
+const moderator = info.moderators //edit these
+const muted = info.muted //in 
+const logChannel = info.logChannel //info.json
+const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users located here
 bot.on("ready", async () => {
   await bot.editStatus({
     status: 'online',
@@ -77,8 +77,13 @@ bot.on("messageDelete", async (message) => {
     return
   if (message.content.length > 1000)
     message.content = message.content.slice(0, 1000) + '...'
-  let embed = createEmbedFields(`**Message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.content }], `User ID: ${message.member.id}`, false)
-  await bot.createMessage(logChannel, { embed })
+  try {
+    let embed = createEmbedFields(`**Message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.content }], `User ID: ${message.member.id}`, false)
+    await bot.createMessage(logChannel, { embed })
+  } catch {
+    message.embeds.description == null ? message.embeds.description = 'Unknown content' : message.embeds.description = message.embeds.description
+    let embed = createEmbedFields(`**Embed message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.embeds.description }], `User ID: ${message.member.id}`, false); await bot.createMessage(logChannel, { embed })
+  }
 })
 bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   if (member.bot === true)
@@ -91,7 +96,7 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
     await member.edit({ nick: oldMember.nick })
     await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
   }
-  let embed = createEmbedFields(null, member, [{ name: 'Name Change', value: `<@!${member.id}> changed their name from ${oldMember.nick}#${member.discriminator} to ${nickName}#${member.discriminator}` }], 'Logger', true)
+  let embed = createEmbedFields(null, member, [{ name: 'Nickname Change', value: `<@!${member.id}> changed their name from ${oldMember.nick} to ${nickName}` }], 'Logger', true)
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
@@ -118,21 +123,19 @@ bot.on("messageCreate", async (msg) => {
   let prefix = info.prefix
   checkForMod(msg.member, moderator) ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
-    let checkContent = msg.content.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
-    let embed; let checkChars = checkFontChar(msg.content, moderators)
-    if (msg.content.length > 2000)
-      msg.content = msg.content.slice(0, 1800)+'...'
+    let checkContent = msg.content
+    let checkChars = checkFontChar(msg.content, moderators)
     if (badToGood(checkContent, moderators) === true) {
-      embed = createEmbed('Word censor', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
-      await bot.createMessage(logChannel, { embed })
       await msg.delete()
-      await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
+      try {
+        await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that word is not allowed here!')
+      } catch { return }
     }
     if (checkChars === true) {
-      embed = createEmbed('Wierd font moderation', `${nickName}\'s message got deleted:\n**${msg.content}**`, 'Moderation', bot)
-      await bot.createMessage(logChannel, { embed })
       await msg.delete()
-      await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
+      try {
+        await bot.createMessage((await bot.getDMChannel(msg.member.id)).id, 'You have been moderated, that type of text is not allowed here!')
+      } catch { return }
     }
   }
   let mentioned; let mentionedNickName;
@@ -218,6 +221,8 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'ban') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+        return await msg.channel.createMessage('I cannot ban that user')
       try {
         let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been banned by ${nickName}`, 'Banhammer', bot)
         await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
@@ -238,6 +243,8 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'mute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+        return await msg.channel.createMessage('I cannot mute that user')
       try {
         await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
         let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been muted by ${nickName}`, 'Mutehammer', bot)
@@ -247,6 +254,8 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'unmute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+        return await msg.channel.createMessage('I cannot unmute that user')
       try {
         await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
         let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted by ${nickName}`, 'Mutehammer', bot)
@@ -256,6 +265,8 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'kick') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+        return await msg.channel.createMessage('I cannot kick that user')
       try {
         await msg.channel.guild.members.get(mentioned.id).kick(`Kicked by ${nickName}`)
         let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been kicked by ${nickName}`, 'Kickhammer', bot)
@@ -268,7 +279,7 @@ bot.on("messageCreate", async (msg) => {
 function badToGood(word, moderators) {
   if (moderators)
     return false
-  word = word.toLowerCase()
+  word = word.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
   let badwords = ['bad', 'words', 'as', 'array', 'strings']
   let checker = false;
   if (badwords.some(bad => word.includes(bad)))
@@ -279,7 +290,7 @@ function nicknameCheck(word, moderators) {
   if (moderators)
     return false
   word = word.toLowerCase()
-  let badwords = ['rp1']
+  let badwords = ['moderated', 'usernames', 'as', 'an', 'array']
   let checker = false;
   if (badwords.some(bad => word.includes(bad)))
     checker = true;
