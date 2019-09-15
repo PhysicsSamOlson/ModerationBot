@@ -158,23 +158,22 @@ bot.on("messageCreate", async (msg) => {
   }
   if (command === 'leaderboard') {
     let leaderboard = []
-    let messageArr = ['#', 'XP', 'User']; let message = '``';
-    for (let j in messageArr)
-      message += ' | ' + messageArr[j]
-    message += '\n'
+    const rankFieldWidth = 2;
+    const xpFieldWidth = 6;
+    let header = `| ${'#'.padStart(rankFieldWidth)} | ${'XP'.padStart(xpFieldWidth)} | User\n`
     Object.keys(userXp).forEach(user => {
       leaderboard.push(userXp[user])
     })
     leaderboard.sort((a, b) => b.xp - a.xp)
     leaderboard = leaderboard.slice(0, 10)
-    let top10 = message
+    let top10 = header
     for (let i = 0; i < 10 && i < leaderboard.length; i++) {
-      let rank = (Number(i) + 1).toString().padStart(2, '\u2000')
-      leaderboard[i].xp = (leaderboard[i].xp.toString()).padStart(4, '\u2000')
-      top10 += `|${rank}  |${leaderboard[i].xp}|${leaderboard[i].user}\n`
+      let rank = String(i + 1)
+      let xp = String(leaderboard[i].xp)
+      let user = leaderboard[i].user
+      top10 += `| ${rank.padStart(rankFieldWidth)} | ${xp.padStart(xpFieldWidth)} | ${user}\n`
     }
-    top10 += '``'
-    let embed = createEmbed('XP Leaderboard', top10, 'Leaderboard', bot)
+    let embed = createEmbed('XP Leaderboard', '```' + top10 + '```', 'Leaderboard', bot)
     return await msg.channel.createMessage({ embed })
 
   }
