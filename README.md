@@ -15,7 +15,7 @@ Xp system and Moderation Bot to secure your server
 # Install
   <div id="install">
   Git clone the repo
-  <pre><code> $ git clone https://github.com/TomiLahren/wordModBot</code></pre>
+  <pre><code> $ git clone https://github.com/TomiLahren/ModerationBot</code></pre>
   
   npm install Eris into your directory
   <pre><code>npm install --no-optional eris</code></pre>
