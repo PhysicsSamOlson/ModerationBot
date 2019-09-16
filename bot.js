@@ -25,6 +25,7 @@ const Eris = require("eris");
 const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
+const profileCard = require('./Misc/profileCard')
 const bot = new Eris(info.token);
 const moderator = info.moderators //edit these
 const muted = info.muted //in 
@@ -60,6 +61,8 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   if (message == null || message.channel.guild == null || message.author.bot === true || oldMessage == null)
     return
   let fullMsg = message.content.slice()
+  if (message.content === oldMessage.content)
+    return
   if (oldMessage.content.length > 1000)
     oldMessage.content = oldMessage.content.slice(0, 1000) + '...'
   if (message.content.length > 1000) {
@@ -146,16 +149,8 @@ bot.on("messageCreate", async (msg) => {
     mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
   let newMsg = msg.content.slice(prefix.length)
   let command = newMsg.split(' ')[0]
-  if (command === 'rank') {
-    let embed;
-    if (mentioned === false)
-      embed = createEmbedFields(null, msg.member, [{ name: 'Rank Card', value: `You currently have ${userXp[msg.author.id]['xp']} xp and need ${(userXp[msg.author.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[msg.author.id]['lvl'] }], 'XpSystem', true)
-    else if (userXp[mentioned.id] == null)
-      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: 'They have not yet started to gain xp' }, { name: 'Level', value: 'Unranked' }])
-    else
-      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
-    await msg.channel.createMessage({ embed })
-  }
+  if (command === 'rank')
+    profileCard.execute(msg, 0, userXp)
   if (command === 'leaderboard') {
     let leaderboard = []
     const rankFieldWidth = 2;
