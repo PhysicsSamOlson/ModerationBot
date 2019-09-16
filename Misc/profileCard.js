@@ -1,3 +1,4 @@
+//CREDIT TO https://github.com/riyacchi/ for providing majority of the profileCard.js code. Thanks Riya! If you copy any of this code, you must give credit to https://github.com/riyacchi/ and follow the License.
 const uniqid = require('uniqid');
 const Canvas = require('canvas');
 
