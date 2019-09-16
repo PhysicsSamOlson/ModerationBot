@@ -25,10 +25,13 @@ const Eris = require("eris");
 const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
+const profileCard = require('./Misc/profileCard')
 const bot = new Eris(info.token);
 const moderator = info.moderators //edit these
 const muted = info.muted //in 
 const logChannel = info.logChannel //info.json
+const censoredWords = info.censoredWords
+const censoredUsernames = info.censoredUsernames
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users located here
 bot.on("ready", async () => {
   await bot.editStatus({
@@ -58,6 +61,8 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   if (message == null || message.channel.guild == null || message.author.bot === true || oldMessage == null)
     return
   let fullMsg = message.content.slice()
+  if (message.content === oldMessage.content)
+    return
   if (oldMessage.content.length > 1000)
     oldMessage.content = oldMessage.content.slice(0, 1000) + '...'
   if (message.content.length > 1000) {
@@ -144,35 +149,26 @@ bot.on("messageCreate", async (msg) => {
     mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
   let newMsg = msg.content.slice(prefix.length)
   let command = newMsg.split(' ')[0]
-  if (command === 'rank') {
-    let embed;
-    if (mentioned === false)
-      embed = createEmbedFields(null, msg.member, [{ name: 'Rank Card', value: `You currently have ${userXp[msg.author.id]['xp']} xp and need ${(userXp[msg.author.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[msg.author.id]['lvl'] }], 'XpSystem', true)
-    else if (userXp[mentioned.id] == null)
-      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: 'They have not yet started to gain xp' }, { name: 'Level', value: 'Unranked' }])
-    else
-      embed = createEmbedFields(null, mentioned, [{ name: 'Rank Card', value: `They currently have ${userXp[mentioned.id]['xp']} xp and need ${(userXp[mentioned.id]['xpToLvl'])} more xp to level up` }, { name: 'Level', value: userXp[mentioned.id]['lvl'] }], 'XpSystem', true)
-    await msg.channel.createMessage({ embed })
-  }
+  if (command === 'rank')
+    profileCard.execute(msg, 0, userXp)
   if (command === 'leaderboard') {
     let leaderboard = []
-    let messageArr = ['#', 'XP', 'User']; let message = '``';
-    for (let j in messageArr)
-      message += ' | ' + messageArr[j]
-    message += '\n'
+    const rankFieldWidth = 2;
+    const xpFieldWidth = 6;
+    let header = `| ${'#'.padStart(rankFieldWidth)} | ${'XP'.padStart(xpFieldWidth)} | User\n`
     Object.keys(userXp).forEach(user => {
       leaderboard.push(userXp[user])
     })
     leaderboard.sort((a, b) => b.xp - a.xp)
     leaderboard = leaderboard.slice(0, 10)
-    let top10 = message
+    let top10 = header
     for (let i = 0; i < 10 && i < leaderboard.length; i++) {
-      let rank = (Number(i) + 1).toString().padStart(2, '\u2000')
-      leaderboard[i].xp = (leaderboard[i].xp.toString()).padStart(4, '\u2000')
-      top10 += `|${rank}  |${leaderboard[i].xp}|${leaderboard[i].user}\n`
+      let rank = String(i + 1)
+      let xp = String(leaderboard[i].xp)
+      let user = leaderboard[i].user
+      top10 += `| ${rank.padStart(rankFieldWidth)} | ${xp.padStart(xpFieldWidth)} | ${user}\n`
     }
-    top10 += '``'
-    let embed = createEmbed('XP Leaderboard', top10, 'Leaderboard', bot)
+    let embed = createEmbed('XP Leaderboard', '```' + top10 + '```', 'Leaderboard', bot)
     return await msg.channel.createMessage({ embed })
 
   }
@@ -280,9 +276,8 @@ function badToGood(word, moderators) {
   if (moderators)
     return false
   word = word.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
-  let badwords = ['bad', 'words', 'as', 'array', 'strings']
   let checker = false;
-  if (badwords.some(bad => word.includes(bad)))
+  if (censoredWords.some(bad => word.includes(bad)))
     checker = true;
   return checker;
 }
@@ -290,9 +285,8 @@ function nicknameCheck(word, moderators) {
   if (moderators)
     return false
   word = word.toLowerCase()
-  let badwords = ['moderated', 'usernames', 'as', 'an', 'array']
   let checker = false;
-  if (badwords.some(bad => word.includes(bad)))
+  if (censoredUsernames.some(bad => word.includes(bad)))
     checker = true;
   return checker;
 }
