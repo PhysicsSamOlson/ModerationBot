@@ -2,26 +2,12 @@ const uniqid = require('uniqid');
 const Canvas = require('canvas');
 
 class Profile {
-    constructor() {
-        this.name = 'profile';
-        this.aliases = ['level', 'lvl'];
-        this.permissions = ['attachFiles'];
-        this.cooldown = 15;
-        this.help = {
-            message: 'Generate a customizable profile card for the Birthday system',
-            usage: 'profile',
-            example: 'profile',
-            inline: true
-        }
-    }
-
     /**
      * Main method getting executed upon command trigger
      * @param {object} message Message object emitted from the Discord API
      */
-    async execute(message, cooldowns, userXp) {
+    async execute(message, userXp) {
         let profileCardUser;
-
         if (message.mentions.length) {
             profileCardUser = message.mentions[0];
         } else {
@@ -38,12 +24,11 @@ class Profile {
 
         try {
             // Profile card data
-            const bgImg = await Canvas.loadImage('https://cdn.discordapp.com/attachments/488728490506452993/602948882464505857/mb3.png');
+            const bgImg = await Canvas.loadImage('./Misc/mb3.png');
             const avatar = await Canvas.loadImage(profileCardUser.dynamicAvatarURL('jpg', 128));
             const dbLevel = userXp[profileCardUser.id].lvl;
             const dbXP = userXp[profileCardUser.id].xp;
             const totalXP = userXp[profileCardUser.id].totalXP;
-            const xptoLevel = userXp[profileCardUser.id].xpToLvl;
             const xpNeededForLevelUp = (5 * (Math.pow(dbLevel, 2)) + 50 * (dbLevel) + 100)
             const currentXPToBeginWith = xpNeededForLevelUp - (totalXP - dbXP);
             const levelPercentageComplete = Math.floor(currentXPToBeginWith / xpNeededForLevelUp * 100);
@@ -133,7 +118,7 @@ class Profile {
 
             // Bot Owner Icon ** Please keep this as me, for credit :) **
             if (profileCardUser.id === '288841415696449538') {
-                const ownerBadge = await Canvas.loadImage('https://static.tumblr.com/eb870445070281d95fc4e05ae99ff5b8/hdgjt9j/4Scp8g0ck/tumblr_static_67flghatq6g408k4skwoc4oc4.png');
+                const ownerBadge = await Canvas.loadImage('./Misc/creatorBadge.png');
 
                 ctx.drawImage(ownerBadge, 343, 126, 16, 12);
                 ctx.font = "9px Exo";
