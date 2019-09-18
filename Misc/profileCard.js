@@ -34,6 +34,7 @@ class Profile {
             const currentXPToBeginWith = xpNeededForLevelUp - (totalXP - dbXP);
             const levelPercentageComplete = Math.floor(currentXPToBeginWith / xpNeededForLevelUp * 100);
             const scorebarWidth = levelPercentageComplete * 2.8;
+            const XPColorBar = userXp[profileCardUser.id].xpColor == null ? '#e8ff54' : userXp[profileCardUser.id].xpColor
             let leaderboard = [];
             Object.keys(userXp).forEach(user => {
                 userXp[user]['id'] = user
@@ -53,7 +54,7 @@ class Profile {
             ctx.fillRect(0, 0, 400, 105);
 
             // Username
-            ctx.font = '16px Arial';
+            ctx.font = '16px Arial, Cambria';
             ctx.fillStyle = '#FFFFFF';
             const maxUsernameLength = 220;
             const usernameLength = Math.min(maxUsernameLength, ctx.measureText(profileCardUser.username).width);
@@ -69,7 +70,7 @@ class Profile {
             ctx.fillRect(120, 105, 280, 10);
 
             // Levelbar
-            ctx.fillStyle = "#" + 'e8ff54';
+            ctx.fillStyle = XPColorBar;
             ctx.fillRect(120, 105, scorebarWidth, 10);
 
             // Levelbar Text Now
