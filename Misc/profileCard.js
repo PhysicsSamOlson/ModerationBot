@@ -1,4 +1,3 @@
-//CREDIT TO https://github.com/riyacchi/ for providing majority of the profileCard.js code. Thanks Riya! If you copy any of this code, you must give credit to https://github.com/riyacchi/ and follow the License.
 const uniqid = require('uniqid');
 const Canvas = require('canvas');
 
@@ -26,7 +25,7 @@ class Profile {
         try {
             // Profile card data
             const bgImg = await Canvas.loadImage('./Misc/mb3.png');
-            const avatar = await Canvas.loadImage(profileCardUser.dynamicAvatarURL('jpg', 128));
+            const avatar = await Canvas.loadImage(profileCardUser.dynamicAvatarURL('png', 128));
             const dbLevel = userXp[profileCardUser.id].lvl;
             const dbXP = userXp[profileCardUser.id].xp;
             const totalXP = userXp[profileCardUser.id].totalXP;
@@ -55,21 +54,22 @@ class Profile {
             // Username
             ctx.font = '16px Arial';
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(profileCardUser.username, 136, 95);
-            const usernameLength = ctx.measureText(profileCardUser.username).width;
+            const maxUsernameLength = 220;
+            const usernameLength = Math.min(maxUsernameLength, ctx.measureText(profileCardUser.username).width);
+            usernameLength >= 170 ? ctx.fillText(profileCardUser.username, 136, 85, maxUsernameLength) : ctx.fillText(profileCardUser.username, 136, 95, maxUsernameLength)
 
             // Usertag
             ctx.font = '10px Exo';
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText('#' + profileCardUser.discriminator, 136 + usernameLength, 95);
+            usernameLength >= 170 ? ctx.fillText('#' + profileCardUser.discriminator, 136 + usernameLength, 85) : ctx.fillText('#' + profileCardUser.discriminator, 136 + usernameLength, 95)
 
             // Levelbar Background
             ctx.fillStyle = "rgba(132, 132, 132, .4)";
-            ctx.fillRect(120, 105, 280, 5);
+            ctx.fillRect(120, 105, 280, 10);
 
             // Levelbar
             ctx.fillStyle = "#" + 'e8ff54';
-            ctx.fillRect(120, 105, scorebarWidth, 5);
+            ctx.fillRect(120, 105, scorebarWidth, 10);
 
             // Levelbar Text Now
             ctx.font = 'bold 9px Arial Bold';
@@ -84,7 +84,7 @@ class Profile {
             ctx.fillText(' / ' + xpNeededForLevelUp + ' XP', 392, 100);
 
             // Level Label
-            ctx.font = '10px Exo';
+            ctx.font = '12px Exo';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#' + 'e65c5c';
             ctx.fillText('LEVEL', 150, 133);
@@ -94,44 +94,46 @@ class Profile {
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(dbLevel, 150, 152);
-            // Rank Label
-            ctx.font = "10px Exo";
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#' + '4287f5';
-            ctx.fillText('RANK', 270, 133);
 
-            // Rank Text
-            ctx.font = "16px Exo";
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(rank, 270, 152);
             // XP Label
-            ctx.font = "10px Exo";
+            ctx.font = "12px Exo";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#' + '66e055';
-            ctx.fillText('TOTAL XP', 210, 133);
+            ctx.fillText('TOTAL XP', 250, 133);
 
             // XP Text
             ctx.font = "16px Exo";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(dbXP, 210, 152);
+            ctx.fillText(dbXP, 250, 152);
+
+            // Rank Label
+            ctx.font = "12px Exo";
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#' + '4287f5';
+            ctx.fillText('RANK', 350, 133);
+
+            // Rank Text
+            ctx.font = "16px Exo";
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(rank, 350, 152);
 
             // Bot Owner Icon ** Please keep this as me, for credit :) **
             if (profileCardUser.id === '288841415696449538') {
                 const ownerBadge = await Canvas.loadImage('./Misc/creatorBadge.png');
 
-                ctx.drawImage(ownerBadge, 343, 126, 16, 12);
+                ctx.drawImage(ownerBadge, 360, 10, 16, 12);
                 ctx.font = "9px Exo";
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#FFFFFF';
-                ctx.fillText('CREATOR', 350, 151);
+                ctx.fillText('CREATOR', 367, 35);
             }
 
             // 100k XP Badge
-            if (dbXP >= 100000 && profileCardUser.id !== '288841415696449538') {
+            else if (dbXP >= 100000) {
                 const ohkBadge = await Canvas.loadImage('./Misc/badge.png');
-                ctx.drawImage(ohkBadge, 342, 129, 26, 20);
+                ctx.drawImage(ohkBadge, 360, 10, 26, 20);
             }
 
             // Background Avatar Circle
