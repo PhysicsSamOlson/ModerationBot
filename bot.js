@@ -118,10 +118,10 @@ bot.on("messageCreate", async (msg) => {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
     if ((userXp[msg.author.id]['xp'] + amountofXp) >= userXp[msg.author.id]['totalXP']) {
       xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * (userXp[msg.author.id]['lvl'] + 1) + 100;
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'] }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: null }
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'] }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'] }
     await xpSystem.updateUserXp(userXp)
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
@@ -149,6 +149,15 @@ bot.on("messageCreate", async (msg) => {
     mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
   let newMsg = msg.content.slice(prefix.length)
   let command = newMsg.split(' ')[0]
+  if (command === 'rankcolor') {
+    let color = msg.content.split(' ').slice(1)[0]
+    if (!/^[0-9A-Fa-f]{6}$/.test(color) && msg.content.split(' ').slice(1)[0] !== 'random')
+      return await msg.channel.createMessage('That is not a valid color')
+    await msg.addReaction('✅')
+    color === 'random' ? color = getRandomColor() : color = `#${color}`
+    userXp[msg.author.id]['xpColor'] = color;
+    xpSystem.updateUserXp(userXp)
+  }
   if (command === 'rank') {
     let cooldowns = userXp[msg.author.id]['cooldown']
     if (cooldowns + 10000 > Date.now())
@@ -227,12 +236,14 @@ bot.on("messageCreate", async (msg) => {
         return await msg.channel.createMessage('You need to specify an user')
       if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
         return await msg.channel.createMessage('I cannot ban that user')
+      let reason = msg.content.split(' ').slice(2).join(' ').length === 0 ? 'Unspecified' : msg.content.split(' ').slice(2).join(' ')
       try {
-        await bot.getDMChannel(mentioned.id).createMessage(`You have been **banned** by **${nickName}**`)
-        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been banned by ${nickName}`, 'Banhammer', bot)
-        await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
+        let dm = await bot.getDMChannel(mentioned.id)
+        await bot.createMessage(dm.id, `You have been **banned** by **${nickName}** for ${reason}`)
+        let embed = createEmbedFields(null, mentioned, [{ name: 'User banned', value: `<@!${mentioned.id}> has been banned by ${nickName}` }, { name: 'Reason', value: reason }], 'Banhammer', true)
+        await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName} | Reason: ${reason}`)
         return await msg.channel.createMessage({ embed })
-      } catch { await msg.channel.createMessage('I do not have permissions to ban that user') }
+      } catch (e) { await msg.channel.createMessage('That user cannot be banned'); console.log(e) }
     }
 
     if (command === 'unban') {
@@ -241,7 +252,7 @@ bot.on("messageCreate", async (msg) => {
       let unbannedUser = msg.content.split(' ').slice(1).join(' ')
       let embed = createEmbed('User Unbanned', `<@!${unbannedUser}> has been unbanned by ${nickName}`, 'Banhammer', bot)
       try {
-        await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, 7, `Unbanned by ${nickName}`)
+        await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, `Unbanned by ${nickName}`)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('That user is not banned') }
     }
@@ -252,7 +263,7 @@ bot.on("messageCreate", async (msg) => {
         return await msg.channel.createMessage('I cannot mute that user')
       try {
         await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
-        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been muted by ${nickName}`, 'Mutehammer', bot)
+        let embed = createEmbed(`User muted`, `<@!${mentioned.id}> has been muted by ${nickName}`, 'Mutehammer', bot)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to mute this user') }
     }
@@ -272,12 +283,14 @@ bot.on("messageCreate", async (msg) => {
         return await msg.channel.createMessage('You need to specify an user')
       if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
         return await msg.channel.createMessage('I cannot kick that user')
+      let reason = msg.content.split(' ').slice(2).join(' ').length === 0 ? 'Unspecified' : msg.content.split(' ').slice(2).join(' ')
       try {
-        await bot.getDMChannel(mentioned.id).createMessage(`You have been **kicked** by **${nickName}**`)
-        await msg.channel.guild.members.get(mentioned.id).kick(`Kicked by ${nickName}`)
-        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been kicked by ${nickName}`, 'Kickhammer', bot)
+        let dm = await bot.getDMChannel(mentioned.id)
+        await bot.createMessage(dm.id, `You have been **kicked** by **${nickName}** for ${reason}`)
+        await bot.kickGuildMember(msg.channel.guild.id, mentioned.id, `Kicked by ${nickName} | Reason: ${reason}`)
+        let embed = createEmbedFields(null, mentioned, [{ name: 'User kicked', value: `<@!${mentioned.id}> has been kicked by ${nickName}` }, { name: 'Reason', value: reason }], 'Kickhammer', true)
         return await msg.channel.createMessage({ embed })
-      } catch { await msg.channel.createMessage('That user cannot be kicked') }
+      } catch (e) { await msg.channel.createMessage('That user cannot be kicked'); console.log(e) }
     }
   }
 
@@ -309,6 +322,17 @@ function checkFontChar(phrase, moderators) {
   else
     return true
 }
+function checkForMod(member, moderator) {
+  let checker = false
+  moderator.forEach(role => {
+    if (member.roles.indexOf(role) >= 0)
+      checker = true
+  })
+  return checker
+}
+function getRandomColor() {
+  return `hsl(${Math.random() * 360}, 100%, 50%)`
+}
 function createEmbed(title, content, footerText, bot) {
   let embedMessageDefault = {
     title: title,
@@ -321,14 +345,6 @@ function createEmbed(title, content, footerText, bot) {
     }
   }
   return embedMessageDefault
-}
-function checkForMod(member, moderator) {
-  let checker = false
-  moderator.forEach(role => {
-    if (member.roles.indexOf(role) >= 0)
-      checker = true
-  })
-  return checker
 }
 function createEmbedFields(content, member, fields, footerText, boolean) {
 
