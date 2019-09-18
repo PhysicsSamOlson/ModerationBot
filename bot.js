@@ -112,7 +112,7 @@ bot.on("messageCreate", async (msg) => {
   randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
   if (userXp[msg.author.id] == null) {
     userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000 }
-    xpSystem.updateUserXp(userXp)
+    await xpSystem.updateUserXp(userXp)
   }
   if ((Date.now() - userXp[msg.author.id]['time']) > 60000) {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
@@ -122,7 +122,7 @@ bot.on("messageCreate", async (msg) => {
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
       userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'] }
-    xpSystem.updateUserXp(userXp)
+    await xpSystem.updateUserXp(userXp)
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
   let prefix = info.prefix
@@ -153,9 +153,11 @@ bot.on("messageCreate", async (msg) => {
     let cooldowns = userXp[msg.author.id]['cooldown']
     if (cooldowns + 10000 > Date.now())
       return msg.channel.createMessage(`Cooldown... please wait **${Math.floor((cooldowns + 10000 - Date.now()) / 1000)}** more seconds`)
-    profileCard.execute(msg, userXp)
-    userXp[msg.author.id]['cooldown'] = Date.now()
-    xpSystem.updateUserXp(userXp)
+    try {
+      await profileCard.execute(msg, userXp)
+      userXp[msg.author.id]['cooldown'] = Date.now()
+      await xpSystem.updateUserXp(userXp)
+    } catch (e) { console.error(e) }
   }
   if (command === 'leaderboard') {
     let leaderboard = []
