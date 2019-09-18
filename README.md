@@ -18,11 +18,15 @@ Xp system and Moderation Bot to secure your server
   <pre><code> $ git clone https://github.com/TomiLahren/ModerationBot</code></pre>
   
   npm install Eris into your directory
-  <pre><code>npm install --no-optional eris</code></pre>
-  
+  <pre><code>npm i --no-optional eris</code></pre>
+  npm install two required packages (Uniqid and Canvas)
+  <pre><code>npm i uniqid</code></pre>
+  <pre><code>npm i canvas</code></pre>
  # After you install
   <ul>
   <li>Configure info.json with your bot token, moderator/muted/logChannel ids, and censored words / nicknames</li>
+  <li>Configure Misc/welcome.txt with your Welcome Message</li>
+  <li>Configure Misc/mb3.png with custom splash image (or don't)</li>
   <li>Run run.bat</li>
   <li>Congratulations, your bot is now online</li>
   </ul>
