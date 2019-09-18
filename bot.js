@@ -228,7 +228,8 @@ bot.on("messageCreate", async (msg) => {
       if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
         return await msg.channel.createMessage('I cannot ban that user')
       try {
-        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been banned by ${nickName}`, 'Banhammer', bot)
+        await bot.getDMChannel(mentioned.id).createMessage(`You have been **banned** by **${nickName}**`)
+        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been banned by ${nickName}`, 'Banhammer', bot)
         await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName}`)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to ban that user') }
@@ -251,7 +252,7 @@ bot.on("messageCreate", async (msg) => {
         return await msg.channel.createMessage('I cannot mute that user')
       try {
         await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
-        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been muted by ${nickName}`, 'Mutehammer', bot)
+        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been muted by ${nickName}`, 'Mutehammer', bot)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to mute this user') }
     }
@@ -272,8 +273,9 @@ bot.on("messageCreate", async (msg) => {
       if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
         return await msg.channel.createMessage('I cannot kick that user')
       try {
+        await bot.getDMChannel(mentioned.id).createMessage(`You have been **kicked** by **${nickName}**`)
         await msg.channel.guild.members.get(mentioned.id).kick(`Kicked by ${nickName}`)
-        let embed = createEmbed(`${mentioned.username}#${mentioned.discriminator}`, `${mentionedNickName} has been kicked by ${nickName}`, 'Kickhammer', bot)
+        let embed = createEmbed(`User banned`, `<@!${mentioned.id}> has been kicked by ${nickName}`, 'Kickhammer', bot)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('That user cannot be kicked') }
     }
