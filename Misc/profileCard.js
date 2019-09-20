@@ -1,28 +1,25 @@
 //CREDIT TO https://github.com/riyacchi/ for providing majority of the profileCard.js code. Thanks Riya! If you copy any of this code, you must give credit to https://github.com/riyacchi/ and follow the License. 
 const uniqid = require('uniqid');
 const Canvas = require('canvas');
-
 class Profile {
     /**
      * Main method getting executed upon command trigger
      * @param {object} message Message object emitted from the Discord API
      */
-    async execute(message, userXp) {
+    async execute(message, userXp, moderator) {
         let profileCardUser;
         if (message.mentions.length) {
             profileCardUser = message.mentions[0];
         } else {
             profileCardUser = message.author;
         } if (profileCardUser.bot) return message.channel.createMessage('Bots don\'t have xp')
-
         // Indicate loading
         message.channel.sendTyping();
 
         // Create canvas and its context
-        const canvas = Canvas.createCanvas(400, 170);
+        const canvas = Canvas.createCanvas(400 * 2, 170 * 2);
         const ctx = canvas.getContext('2d');
-
-
+        ctx.scale(2, 2);
         try {
             // Profile card data
             const bgImg = await Canvas.loadImage('./Misc/mb3.png');
@@ -61,7 +58,7 @@ class Profile {
             usernameLength >= 170 ? ctx.fillText(profileCardUser.username, 136, 85, maxUsernameLength) : ctx.fillText(profileCardUser.username, 136, 95, maxUsernameLength)
 
             // Usertag
-            ctx.font = '10px Exo';
+            ctx.font = '10px Arial';
             ctx.fillStyle = '#FFFFFF';
             usernameLength >= 170 ? ctx.fillText('#' + profileCardUser.discriminator, 136 + usernameLength, 85) : ctx.fillText('#' + profileCardUser.discriminator, 136 + usernameLength, 95)
 
@@ -74,49 +71,49 @@ class Profile {
             ctx.fillRect(120, 105, scorebarWidth, 10);
 
             // Levelbar Text Now
-            ctx.font = 'bold 9px Arial Bold';
+            ctx.font = 'bold 9px Arial';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(currentXPToBeginWith, 392 - ctx.measureText(' / ' + xpNeededForLevelUp + ' XP').width, 100);
 
             // Levelbar Text Needed
-            ctx.font = '9px Arial';
+            ctx.font = 'bold 9px Arial';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(' / ' + xpNeededForLevelUp + ' XP', 392, 100);
 
             // Level Label
-            ctx.font = '12px Exo';
+            ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#' + 'e65c5c';
             ctx.fillText('LEVEL', 150, 133);
 
             // Level Text
-            ctx.font = '16px Exo';
+            ctx.font = '16px Arial';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(dbLevel, 150, 152);
 
             // XP Label
-            ctx.font = "12px Exo";
+            ctx.font = "bold 12px Arial";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#' + '66e055';
             ctx.fillText('TOTAL XP', 250, 133);
 
             // XP Text
-            ctx.font = "16px Exo";
+            ctx.font = "16px Arial";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(dbXP, 250, 152);
 
             // Rank Label
-            ctx.font = "12px Exo";
+            ctx.font = "bold 12px Arial";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#' + '4287f5';
             ctx.fillText('RANK', 350, 133);
 
             // Rank Text
-            ctx.font = "16px Exo";
+            ctx.font = "16px Arial";
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(rank, 350, 152);
@@ -126,16 +123,24 @@ class Profile {
                 const ownerBadge = await Canvas.loadImage('./Misc/creatorBadge.png');
 
                 ctx.drawImage(ownerBadge, 360, 10, 16, 12);
-                ctx.font = "9px Exo";
+                ctx.font = "bold 9px Arial";
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText('CREATOR', 367, 35);
             }
-
+            //Mod Badge
+            else if (moderator === true) {
+                const modBadge = await Canvas.loadImage('./Misc/modbadge.png');
+                ctx.drawImage(modBadge, 373, 10, 16, 12);
+                ctx.font = "bold 9px Arial";
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff530';
+                ctx.fillText('MOD', 358, 20);
+            }
             // 100k XP Badge
             else if (dbXP >= 100000) {
-                const ohkBadge = await Canvas.loadImage('./Misc/badge.png');
-                ctx.drawImage(ohkBadge, 360, 10, 26, 20);
+                const ohkBadge = await Canvas.loadImage('./Misc/ohkbadge.png');
+                ctx.drawImage(ohkBadge, 360, 10, 16, 12);
             }
 
             // Background Avatar Circle
