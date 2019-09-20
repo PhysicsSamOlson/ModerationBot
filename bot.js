@@ -48,7 +48,7 @@ bot.on("guildMemberAdd", async (guild, member) => {
   if (JSON.parse(xpSystem.userXp)[member.id] != null)
     embed.fields.push({ name: 'Returning user', value: 'This is a returning user' })
   await bot.createMessage(logChannel, { embed })
-  if (nicknameCheck(member.username, checkForMod(member, moderator))) {
+  if (nicknameCheck(member.username, checkForMod(member))) {
     await member.edit({ nick: 'FuzzySquirrel' + Math.floor(Math.random() * 1000) })
     await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
   }
@@ -70,7 +70,7 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   }
   let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
   await bot.createMessage(logChannel, { embed })
-  if (badToGood(fullMsg, checkForMod(message.member, moderator)) || checkFontChar(fullMsg, checkForMod(message.member, moderator))) {
+  if (badToGood(fullMsg, checkForMod(message.member)) || checkFontChar(fullMsg, checkForMod(message.member))) {
     embed = createEmbed('Word censor', `${message.member.username}#${message.member.discriminator}\'s message got deleted:\n**${message.content}**`, 'Moderation', bot)
     await bot.createMessage(logChannel, { embed })
     await message.delete()
@@ -97,7 +97,7 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   oldMember.nick == null ? oldMember.nick = member.username : oldMember.nick = oldMember.nick
   if (oldMember.nick === nickName)
     return
-  if (nicknameCheck(nickName, checkForMod(member, moderator))) {
+  if (nicknameCheck(nickName, checkForMod(member))) {
     await member.edit({ nick: oldMember.nick })
     await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
   }
@@ -110,15 +110,15 @@ bot.on("messageCreate", async (msg) => {
   let userXp = JSON.parse(xpSystem.userXp)
   let randomNum = Math.random(); let amountofXp;
   randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
-  if (userXp[msg.author.id] == null) {
-    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000 }
+  if (userXp[msg.author.id] == null && !badToGood(msg.content, checkForMod(msg.member))) {
+    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000, xpColor: null }
     await xpSystem.updateUserXp(userXp)
   }
-  if ((Date.now() - userXp[msg.author.id]['time']) > 60000) {
+  if ((Date.now() - userXp[msg.author.id]['time']) > 60000 && !badToGood(msg.content, checkForMod(msg.member))) {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
     if ((userXp[msg.author.id]['xp'] + amountofXp) >= userXp[msg.author.id]['totalXP']) {
       xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * (userXp[msg.author.id]['lvl'] + 1) + 100;
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: null }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'] }
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
       userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'] }
@@ -126,7 +126,7 @@ bot.on("messageCreate", async (msg) => {
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
   let prefix = info.prefix
-  checkForMod(msg.member, moderator) ? moderators = true : moderators = false
+  checkForMod(msg.member) ? moderators = true : moderators = false
   if (msg.content.substring(0, prefix.length) !== prefix) {
     let checkContent = msg.content
     let checkChars = checkFontChar(msg.content, moderators)
@@ -163,7 +163,8 @@ bot.on("messageCreate", async (msg) => {
     if (cooldowns + 10000 > Date.now())
       return msg.channel.createMessage(`Cooldown... please wait **${Math.floor((cooldowns + 10000 - Date.now()) / 1000)}** more seconds`)
     try {
-      await profileCard.execute(msg, userXp)
+      let moderatorCheck = mentioned === false ? checkForMod(msg.member) : checkForMod(msg.channel.guild.members.get(mentioned.id))
+      await profileCard.execute(msg, userXp, moderatorCheck)
       userXp[msg.author.id]['cooldown'] = Date.now()
       await xpSystem.updateUserXp(userXp)
     } catch (e) { console.error(e) }
@@ -234,7 +235,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'ban') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id)))
         return await msg.channel.createMessage('I cannot ban that user')
       let reason = msg.content.split(' ').slice(2).join(' ').length === 0 ? 'Unspecified' : msg.content.split(' ').slice(2).join(' ')
       try {
@@ -259,7 +260,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'mute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id)))
         return await msg.channel.createMessage('I cannot mute that user')
       try {
         await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
@@ -270,7 +271,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'unmute') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id)))
         return await msg.channel.createMessage('I cannot unmute that user')
       try {
         await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
@@ -281,7 +282,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'kick') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      if (checkForMod(msg.channel.guild.members.get(mentioned.id), moderator))
+      if (checkForMod(msg.channel.guild.members.get(mentioned.id)))
         return await msg.channel.createMessage('I cannot kick that user')
       let reason = msg.content.split(' ').slice(2).join(' ').length === 0 ? 'Unspecified' : msg.content.split(' ').slice(2).join(' ')
       try {
@@ -322,13 +323,13 @@ function checkFontChar(phrase, moderators) {
   else
     return true
 }
-function checkForMod(member, moderator) {
-  let checker = false
+function checkForMod(member) {
+  let checker = false;
   moderator.forEach(role => {
     if (member.roles.indexOf(role) >= 0)
-      checker = true
+      checker = true;
   })
-  return checker
+  return checker;
 }
 function getRandomColor() {
   return `hsl(${Math.random() * 360}, 100%, 50%)`
