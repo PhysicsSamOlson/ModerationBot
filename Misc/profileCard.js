@@ -140,7 +140,7 @@ class Profile {
             // 100k XP Badge
             else if (dbXP >= 100000) {
                 const ohkBadge = await Canvas.loadImage('./Misc/ohkbadge.png');
-                ctx.drawImage(ohkBadge, 360, 10, 16, 12);
+                ctx.drawImage(ohkBadge, 360, 10, 30, 26);
             }
 
             // Background Avatar Circle
