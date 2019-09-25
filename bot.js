@@ -26,7 +26,10 @@ const info = require('./info.json');
 const fs = require('fs')
 const xpSystem = require('./xpSystem.js')
 const profileCard = require('./Misc/profileCard')
-const bot = new Eris(info.token);
+const bot = new Eris(info.token, {
+  defaultImageFormat: "png",
+  messageLimit: 100000
+});
 const moderator = info.moderators //edit these
 const muted = info.muted //in 
 const logChannel = info.logChannel //info.json
