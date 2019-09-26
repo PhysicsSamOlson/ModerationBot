@@ -269,7 +269,7 @@ bot.on("messageCreate", async (msg) => {
         await bot.createMessage(dm.id, `You have been **banned** by **${nickName}** for ${reason}`)
         let embed = createEmbedFields(null, mentioned, [{ name: 'User banned', value: `<@!${mentioned.id}> has been banned by ${nickName}` }, { name: 'Reason', value: reason }], 'Banhammer', true)
         await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName} | Reason: ${reason}`)
-        return await msg.channel.createMessage({ embed })
+        await msg.channel.createMessage({ embed })
       } catch (e) { await msg.channel.createMessage('That user cannot be banned'); console.log(e) }
       await bot.emit('command', msg, command, mentioned)
     }
@@ -281,7 +281,7 @@ bot.on("messageCreate", async (msg) => {
       let embed = createEmbed('User Unbanned', `<@!${unbannedUser}> has been unbanned by ${nickName}`, 'Banhammer', bot)
       try {
         await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, `Unbanned by ${nickName}`)
-        return await msg.channel.createMessage({ embed })
+        await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('That user is not banned') }
       await bot.emit('command', msg, command)
     }
@@ -293,7 +293,7 @@ bot.on("messageCreate", async (msg) => {
       try {
         await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Muted by ${nickName}`)
         let embed = createEmbed(`User muted`, `<@!${mentioned.id}> has been muted by ${nickName}`, 'Mutehammer', bot)
-        return await msg.channel.createMessage({ embed })
+        await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to mute this user') }
       await bot.emit('command', msg, command, mentioned)
     }
@@ -305,7 +305,7 @@ bot.on("messageCreate", async (msg) => {
       try {
         await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, muted, `Unmuted by ${nickName}`)
         let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted by ${nickName}`, 'Mutehammer', bot)
-        return await msg.channel.createMessage({ embed })
+        await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to unmute this user') }
       await bot.emit('command', msg, command, mentioned)
     }
@@ -320,7 +320,7 @@ bot.on("messageCreate", async (msg) => {
         await bot.createMessage(dm.id, `You have been **kicked** by **${nickName}** for ${reason}`)
         await bot.kickGuildMember(msg.channel.guild.id, mentioned.id, `Kicked by ${nickName} | Reason: ${reason}`)
         let embed = createEmbedFields(null, mentioned, [{ name: 'User kicked', value: `<@!${mentioned.id}> has been kicked by ${nickName}` }, { name: 'Reason', value: reason }], 'Kickhammer', true)
-        return await msg.channel.createMessage({ embed })
+        await msg.channel.createMessage({ embed })
       } catch (e) { await msg.channel.createMessage('That user cannot be kicked'); console.log(e) }
       await bot.emit('command', msg, command, mentioned)
     }
