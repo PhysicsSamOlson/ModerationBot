@@ -47,14 +47,14 @@ bot.on("ready", async () => {
 });
 bot.on("error", console.error)
 bot.on("guildMemberAdd", async (guild, member) => {
-  await bot.createMessage((await bot.getDMChannel(member.id)).id, welcomeMessage)
+  await bot.createMessage((await bot.getDMChannel(member.id)).id, welcomeMessage).catch(console.error)
   let embed = createEmbedFields(null, member, [{ name: 'Member Joined', value: `<@!${member.id}> has joined ${guild.name}` }, { name: 'Account Creation Date', value: new Date(member.createdAt).toString() }], `ID: ${member.id}`, false)
   if (JSON.parse(xpSystem.userXp)[member.id] != null)
     embed.fields.push({ name: 'Returning user', value: 'This is a returning user' })
   await bot.createMessage(logChannel, { embed })
   if (nicknameCheck(member.username, checkForMod(member))) {
     await member.edit({ nick: 'FuzzySquirrel' + Math.floor(Math.random() * 1000) })
-    await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators')
+    await bot.createMessage((await bot.getDMChannel(member.id)).id, 'That username is not allowed here. We have changed it for you. If you have any problems, please contact @Moderators').catch(console.error)
   }
 })
 bot.on("guildMemberRemove", async (guild, member) => {
@@ -63,9 +63,9 @@ bot.on("guildMemberRemove", async (guild, member) => {
 })
 bot.on("command", async (msg, command, user) => {
   if (user == null)
-    try { await fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" | ${new Date().toString()}`) } catch (e) { console.error(e) }
+    try { fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" | ${new Date().toString()}`) } catch (e) { console.error(e) }
   else
-    try { await fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" on ${user.username}#${user.discriminator}(${user.id}) | ${new Date().toString()}`) } catch (e) { console.error(e) }
+    try { fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" on ${user.username}#${user.discriminator}(${user.id}) | ${new Date().toString()}`) } catch (e) { console.error(e) }
 })
 bot.on("messageUpdate", async (message, oldMessage) => {
   if (message == null || message.channel.guild == null || message.author.bot === true || oldMessage == null)
