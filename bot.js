@@ -33,8 +33,9 @@ const bot = new Eris(info.token, {
 const moderator = info.moderators //edit these
 const muted = info.muted //in 
 const logChannel = info.logChannel //info.json
-const censoredWords = info.censoredWords
-const censoredUsernames = info.censoredUsernames
+const censoredWords = info.censoredWords //and
+const censoredUsernames = info.censoredUsernames //don't forget
+const exemptWords = info.exemptWords //these
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users located here
 bot.on("ready", async () => {
   await bot.editStatus({
@@ -60,6 +61,12 @@ bot.on("guildMemberRemove", async (guild, member) => {
   let embed = createEmbedFields(null, member, [{ name: 'Member Left', value: `<@!${member.id}> has left ${guild.name}` }], `ID: ${member.id}`, false)
   await bot.createMessage(logChannel, { embed })
 })
+bot.on("command", async (msg, command, user) => {
+  if (user == null)
+    try { await fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" | ${new Date().toString()}`) } catch (e) { console.error(e) }
+  else
+    try { await fs.appendFileSync(`./Misc/commands/${command}.txt`, `\n${msg.member.username}#${msg.member.discriminator}(${msg.member.id}) has used the command "${command}" on ${user.username}#${user.discriminator}(${user.id}) | ${new Date().toString()}`) } catch (e) { console.error(e) }
+})
 bot.on("messageUpdate", async (message, oldMessage) => {
   if (message == null || message.channel.guild == null || message.author.bot === true || oldMessage == null)
     return
@@ -71,8 +78,10 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   if (message.content.length > 1000) {
     message.content = message.content.slice(0, 1000) + '...'
   }
-  let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
-  await bot.createMessage(logChannel, { embed })
+  try {
+    let embed = createEmbedFields(`**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**`, message.member, [{ name: 'Before', value: oldMessage.content }, { name: 'After', value: message.content }], `User ID: ${message.member.id}`, false)
+    await bot.createMessage(logChannel, { embed })
+  } catch { let embed = message.embeds[0]; embed.timestamp = new Date(); embed.footer.text = `User ID: ${message.member.id}`; embed.fields.splice(0, 0, { name: 'This message was editted', value: `**Message edited in <#${message.channel.id}> [Jump to Message](https://discordapp.com/channels/${message.channel.guild.id}/${message.channel.id}/${message.id})**` }); await bot.createMessage(logChannel, { embed }) }
   if (badToGood(fullMsg, checkForMod(message.member)) || checkFontChar(fullMsg, checkForMod(message.member))) {
     embed = createEmbed('Word censor', `${message.member.username}#${message.member.discriminator}\'s message got deleted:\n**${message.content}**`, 'Moderation', bot)
     await bot.createMessage(logChannel, { embed })
@@ -81,16 +90,23 @@ bot.on("messageUpdate", async (message, oldMessage) => {
   }
 })
 bot.on("messageDelete", async (message) => {
-  if (message.channel.guild == null || message == null || message.content == null)
+  if (message.channel.guild == null || message == null)
     return
+  if (message.content == null) {
+    let embed = createEmbed(`Unknown message content`, `**Message deleted in <#${message.channel.id}>**`, `Message ID: ${message.id}`, bot)
+    return await bot.createMessage(logChannel, { embed })
+  }
   if (message.content.length > 1000)
     message.content = message.content.slice(0, 1000) + '...'
   try {
     let embed = createEmbedFields(`**Message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.content }], `User ID: ${message.member.id}`, false)
     await bot.createMessage(logChannel, { embed })
   } catch {
-    message.embeds.description == null ? message.embeds.description = 'Unknown content' : message.embeds.description = message.embeds.description
-    let embed = createEmbedFields(`**Embed message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**`, message.member, [{ name: 'Deleted Message', value: message.embeds.description }], `User ID: ${message.member.id}`, false); await bot.createMessage(logChannel, { embed })
+    let embed = message.embeds[0]
+    embed.timestamp = new Date()
+    embed.footer.text = `User ID: ${message.member.id}`
+    embed.fields.splice(0, 0, { name: 'This message was deleted', value: `**Embed message sent by <@!${message.member.id}> deleted in <#${message.channel.id}>**` })
+    await bot.createMessage(logChannel, { embed })
   }
 })
 bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
@@ -199,6 +215,7 @@ bot.on("messageCreate", async (msg) => {
         return bot.createMessage(msg.channel.id, `The syntax is ${prefix}prefix newprefix`)
       await updatePrefix(msg.content.split(' ')[1], info)
       await bot.createMessage(msg.channel.id, 'The new prefix for commands is ' + msg.content.split(' ')[1])
+      await bot.emit('command', msg, command)
     }
     if (command === 'del') {
       let x = msg.content.split(' ')
@@ -215,13 +232,19 @@ bot.on("messageCreate", async (msg) => {
           await response.delete()
         }, 60000)
       })
+      await bot.emit('command', msg, command)
     }
     if (command === 'user-info') {
       if (mentioned === false)
         return await msg.channel.createMessage('You need to specify an user')
-      let discordJoinDate = new Date(mentioned.createdAt).toString(); let serverJoinDate = new Date(msg.channel.guild.members.get(msg.mentions[0].id).joinedAt).toString()
-      let embedFields = [{ name: 'Joined Discord at', value: discordJoinDate }, { name: 'Joined Server at', value: serverJoinDate }]
+      let guildMember = msg.channel.guild.members.get(msg.mentions[0].id)
+      let discordJoinDate = new Date(mentioned.createdAt).toString(); let serverJoinDate = new Date(guildMember.joinedAt).toString()
+      let embedFields = [{ name: 'Joined Server at', value: serverJoinDate }, { name: 'Joined Discord at', value: discordJoinDate }]
       let embed = {
+        author: {
+          name: `${mentionedNickName}#${mentioned.discriminator}`,
+          icon_url: mentioned.avatarURL
+        },
         color: 0x6ade89,
         timestamp: new Date(),
         fields: embedFields,
@@ -229,11 +252,11 @@ bot.on("messageCreate", async (msg) => {
           url: mentioned.avatarURL
         },
         footer: {
-          icon_url: bot.user.avatarURL,
-          text: 'User Info'
+          text: `User ID: ${guildMember.id}`
         }
       }
-      msg.channel.createMessage({ embed })
+      await msg.channel.createMessage({ embed })
+      await bot.emit('command', msg, command, guildMember)
     }
     if (command === 'ban') {
       if (mentioned === false)
@@ -248,6 +271,7 @@ bot.on("messageCreate", async (msg) => {
         await bot.banGuildMember(msg.channel.guild.id, mentioned.id, 7, `Banned by ${nickName} | Reason: ${reason}`)
         return await msg.channel.createMessage({ embed })
       } catch (e) { await msg.channel.createMessage('That user cannot be banned'); console.log(e) }
+      await bot.emit('command', msg, command, mentioned)
     }
 
     if (command === 'unban') {
@@ -259,6 +283,7 @@ bot.on("messageCreate", async (msg) => {
         await bot.unbanGuildMember(msg.channel.guild.id, unbannedUser, `Unbanned by ${nickName}`)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('That user is not banned') }
+      await bot.emit('command', msg, command)
     }
     if (command === 'mute') {
       if (mentioned === false)
@@ -270,6 +295,7 @@ bot.on("messageCreate", async (msg) => {
         let embed = createEmbed(`User muted`, `<@!${mentioned.id}> has been muted by ${nickName}`, 'Mutehammer', bot)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to mute this user') }
+      await bot.emit('command', msg, command, mentioned)
     }
     if (command === 'unmute') {
       if (mentioned === false)
@@ -281,6 +307,7 @@ bot.on("messageCreate", async (msg) => {
         let embed = createEmbed('User Unmuted', `${mentionedNickName} has been unmuted by ${nickName}`, 'Mutehammer', bot)
         return await msg.channel.createMessage({ embed })
       } catch { await msg.channel.createMessage('I do not have permissions to unmute this user') }
+      await bot.emit('command', msg, command, mentioned)
     }
     if (command === 'kick') {
       if (mentioned === false)
@@ -295,6 +322,7 @@ bot.on("messageCreate", async (msg) => {
         let embed = createEmbedFields(null, mentioned, [{ name: 'User kicked', value: `<@!${mentioned.id}> has been kicked by ${nickName}` }, { name: 'Reason', value: reason }], 'Kickhammer', true)
         return await msg.channel.createMessage({ embed })
       } catch (e) { await msg.channel.createMessage('That user cannot be kicked'); console.log(e) }
+      await bot.emit('command', msg, command, mentioned)
     }
   }
 
@@ -304,7 +332,7 @@ function badToGood(word, moderators) {
     return false
   word = word.toLowerCase().replace(/[\u007F-\uFFFF]\s*/g, "").replace(/`/g, '').replace(/\n/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/~/g, '')
   let checker = false;
-  if (censoredWords.some(bad => word.includes(bad)))
+  if (censoredWords.some(bad => word.includes(bad)) && !exemptWords.some(exempt => word.includes(exempt)))
     checker = true;
   return checker;
 }
