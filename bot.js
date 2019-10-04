@@ -432,12 +432,8 @@ function createEmbedFields(content, member, fields, footerText, boolean) {
     return embedMessageDefault
 }
 async function updatePrefix(prefix, info) {
-    info.prefix = prefix
-    let jsonMsg = {
-        token: info.token,
-        prefix: prefix
-    }
-    await fs.writeFile("./info.json", JSON.stringify(jsonMsg, null, 2), (error) => { if (error != null) { console.error(error) } })
+  info.prefix = prefix
+  await fs.writeFile("./info.json", JSON.stringify(info, null, 1), (error) => { if (error != null) { console.error(error) } })
 }
 (async () => {
     await bot.connect();
