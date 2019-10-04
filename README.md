@@ -12,6 +12,7 @@ Xp system and Moderation Bot to secure your server
   - !unmute @user
   - !user-info @user
   - !leaderboard
+  - !lock @user
 # Install
   <div id="install">
   Git clone the repo
@@ -24,7 +25,7 @@ Xp system and Moderation Bot to secure your server
   <pre><code>npm i canvas</code></pre>
  # After you install
   <ul>
-  <li>Configure info.json with your bot token, moderator/muted/logChannel ids, and censored words / nicknames</li>
+  <li>Configure info.json with your bot token, moderator/muted/xplocked/logChannel ids, and censored words / nicknames</li>
   <li>Configure Misc/welcome.txt with your Welcome Message</li>
   <li>Configure Misc/mb3.png with custom splash image (or don't)</li>
   <li>Run run.bat</li>
