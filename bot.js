@@ -330,7 +330,7 @@ bot.on("messageCreate", async (msg) => {
             if (checkForMod(msg.channel.guild.members.get(mentioned.id)))
                 return await msg.channel.createMessage('I cannot lock that user')
             try {
-                await bot.removeGuildMemberRole(msg.channel.guild.id, mentioned.id, info.lockedRole)
+                await bot.addGuildMemberRole(msg.channel.guild.id, mentioned.id, info.lockedRole)
                 let embed = createEmbedFields(null, mentioned, [{ name: 'User xp locked', value: `<@!${mentioned.id}> has been xp locked by ${nickName}` }], 'Lockhammer', true)
                 await msg.channel.createMessage({ embed })
             } catch (e) { await msg.channel.createMessage('That user cannot be locked'); console.log(e) }
