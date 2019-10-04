@@ -2,6 +2,7 @@
   "token": "YOUR BOT TOKEN",
   "prefix": "!",
   "muted": "MUTED ROLE ID",
+  "lockedRole": "XP LOCKED ROLE HERE",
   "logChannel": "ARCHIVE CHANNEL ID",
   "moderators": ["Array", "of", "moderator", "role", "IDS"],
   "censoredWords": ["censored", "words", "as", "an", "array"],
