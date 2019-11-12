@@ -226,7 +226,7 @@ bot.on("messageCreate", async (msg) => {
         return await bot.createMessage(msg.channel.id, 'Sorry I can only delete up to 100 messages at a time')
       if (isNaN(x[1]) || Math.sign(x[1]) === -1 || Number(x[1]) === 0)
         return await bot.createMessage(msg.channel.id, 'Invalid amount of messages to delete')
-      mentioned === false ? await msg.channel.purge(x[1]) : await msg.channel.purge(x[1], msg => msg.author.id === mentioned.id)
+      await msg.channel.purge(x[1])
       await bot.createMessage(msg.channel.id, x[1] + ' messages have been deleted').then(function (response) {
         setTimeout(async function () {
           await response.delete()
