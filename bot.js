@@ -258,6 +258,20 @@ bot.on("messageCreate", async (msg) => {
       await msg.channel.createMessage({ embed })
       await bot.emit('command', msg, command, guildMember)
     }
+    if (command === 'warn') {
+      if (msg.content.split(' ').length < 2)
+        return await bot.createMessage(msg.channel.id, 'Syntax is !warn @user reason')
+      let warnedUser = msg.channel.guild.members.get(msg.content.split(' ').slice(1)[0].replace(/[^0-9]/g, ''))
+      if (warnedUser == null)
+        return await bot.createMessage(msg.channel.id, 'Unknown member')
+      let reason = msg.content.split(' ').slice(2).join(' ').length === 0 ? 'Unspecified' : msg.content.split(' ').slice(2).join(' ')
+      let dm = await bot.getDMChannel(warnedUser.id)
+      let embed = createEmbedFields(null, warnedUser, [{ name: 'Warning', value: `You have been warned by a server moderator` }, { name: 'Reason', value: reason }], 'Warning', true)
+      await bot.createMessage(dm.id, { embed })
+      await bot.createMessage(logChannel, { embed })
+      await msg.addReaction('✅')
+      await bot.emit('command', msg, command, warnedUser)
+    }
     if (command === 'slowmode') {
       let time = msg.content.split(' ').length < 2 ? 30 : msg.content.split(' ')[1]
       if (time > 21600)
