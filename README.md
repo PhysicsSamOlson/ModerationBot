@@ -6,7 +6,8 @@ Xp system and Moderation Bot to secure your server
   - !del [amountofmsgs] (default 50)
   - !rank [@user]
   - !ban @user
-  - !unban USERID
+  - !unban @user or userid
+  - !warn @user or userid reason
   - !kick @user
   - !mute @user
   - !unmute @user
