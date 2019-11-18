@@ -167,6 +167,8 @@ bot.on("messageCreate", async (msg) => {
   if (mentioned !== false)
     mentioned.nick == null ? mentionedNickName = mentioned.username : mentionedNickName = mentioned.nick
   let newMsg = msg.content.slice(prefix.length)
+  if (!msg.content.startsWith(prefix))
+    return
   let command = newMsg.split(' ')[0]
   if (command === 'rankcolor') {
     let color = msg.content.split(' ').slice(1)[0]
