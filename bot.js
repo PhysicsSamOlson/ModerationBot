@@ -129,7 +129,9 @@ bot.on("messageCreate", async (msg) => {
   let userXp = JSON.parse(xpSystem.userXp)
   let randomNum = Math.random(); let amountofXp;
   randomNum <= 0.33 ? amountofXp = 15 : randomNum > 0.33 && randomNum <= 0.66 ? amountofXp = 20 : amountofXp = 25;
-  if (userXp[msg.author.id] == null && !badToGood(msg.content, checkForMod(msg.member))) {
+  if (userXp[msg.author.id] == null) {
+    if (badToGood(msg.content, checkForMod(msg.member)))
+      amountofXp = 0
     userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000, xpColor: null }
     await xpSystem.updateUserXp(userXp)
   }
