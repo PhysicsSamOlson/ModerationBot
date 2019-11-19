@@ -6,5 +6,6 @@
   "logChannel": "ARCHIVE CHANNEL ID",
   "moderators": ["Array", "of", "moderator", "role", "IDS"],
   "censoredWords": ["censored", "words", "as", "an", "array"],
-  "censoredUsernames": ["censored", "usernames", "as", "an", "array"]
+  "censoredUsernames": ["censored", "usernames", "as", "an", "array"],
+  "exemptWords": ["exempt", "censored", "words", "as", "an", "array"]
 }
