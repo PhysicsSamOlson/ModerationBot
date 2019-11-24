@@ -15,6 +15,8 @@ Xp system and Moderation Bot to secure your server
   - !leaderboard
   - !lock @user
   - !slowmode [time in seconds] //default is 30 seconds
+  - !timemute @user
+  - !timeunmute @user
 # Install
   <div id="install">
   Git clone the repo
