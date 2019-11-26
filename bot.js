@@ -314,8 +314,8 @@ bot.on("messageCreate", async (msg) => {
     }
     if (command === 'slowmode') {
       let time = msg.content.split(' ').length < 2 ? 30 : msg.content.split(' ')[1]
-      if (time > 21600)
-        return await msg.channel.createMessage('Time must be 21600 seconds or less')
+      if (time > 21600 || isNaN(time) || Math.sign(time) === -1)
+        return await msg.channel.createMessage('Time must be a number and 21600 seconds or less but >= 0')
       try {
         await msg.channel.edit({ rateLimitPerUser: time })
         let description = Number(time) === 0 ? `The slow mode timer has been turned off for <#${msg.channel.id}>` : `A ${time} second slow mode timer has been turned on for <#${msg.channel.id}>`
