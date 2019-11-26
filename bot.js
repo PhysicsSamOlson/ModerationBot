@@ -133,7 +133,7 @@ bot.on("messageCreate", async (msg) => {
   if (userXp[msg.author.id] == null) {
     if (badToGood(msg.content, checkForMod(msg.member)))
       amountofXp = 0
-    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000, xpColor: null, timemute: null }
+    userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000, xpColor: null, timemute: null, tracking: null }
     await xpSystem.updateUserXp(userXp)
   }
   if (userXp[msg.author.id]['timemute'] != null) {
@@ -142,14 +142,21 @@ bot.on("messageCreate", async (msg) => {
       await bot.removeGuildMemberRole(msg.channel.guild.id, msg.member.id, muted, `Time Muted`);
     }, 30000)
   }
+  if (userXp[msg.author.id]['tracking'] != null) {
+    userXp[msg.author.id]['tracking'].forEach(async (mod) => {
+      let dm = await bot.getDMChannel(mod)
+      let embed = createEmbedFields(`Message sent in <#${msg.channel.id}> [Jump to Message](https://discordapp.com/channels/${msg.channel.guild.id}/${msg.channel.id}/${msg.id})`, msg.member, [{ name: 'Tracked Message', value: msg.content.slice(0, 1100) },], `Tracking UserID ${msg.author.id}`, false)
+      await bot.createMessage(dm.id, { embed })
+    })
+  }
   if ((Date.now() - userXp[msg.author.id]['time']) > 60000 && !badToGood(msg.content, checkForMod(msg.member)) && checkForLock(msg.member) === false) {
     let xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'], 2)) + 50 * userXp[msg.author.id]['lvl'] + 100;
     if ((userXp[msg.author.id]['xp'] + amountofXp) >= userXp[msg.author.id]['totalXP']) {
       xp2lvl = 5 * (Math.pow(userXp[msg.author.id]['lvl'] + 1, 2)) + 50 * (userXp[msg.author.id]['lvl'] + 1) + 100;
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'], timemute: userXp[msg.author.id]['timemute'] }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'] + 1, xpToLvl: (userXp[msg.author.id]['totalXP'] + xp2lvl) - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: xp2lvl + userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'], timemute: userXp[msg.author.id]['timemute'], tracking: userXp[msg.author.id]['tracking'] }
       await bot.createMessage(msg.channel.id, `Nice ${msg.member.username}#${msg.member.discriminator}, you xfered enough rating to get to level ${userXp[msg.author.id]['lvl']}!`)
     } else
-      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'], timemute: userXp[msg.author.id]['timemute'] }
+      userXp[msg.author.id] = { xp: userXp[msg.author.id]['xp'] + amountofXp, time: Date.now(), lvl: userXp[msg.author.id]['lvl'], xpToLvl: userXp[msg.author.id]['totalXP'] - (userXp[msg.author.id]['xp'] + amountofXp), totalXP: userXp[msg.author.id]['totalXP'], user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: userXp[msg.author.id]['cooldown'], xpColor: userXp[msg.author.id]['xpColor'], timemute: userXp[msg.author.id]['timemute'], tracking: userXp[msg.author.id]['tracking'] }
     await xpSystem.updateUserXp(userXp)
   }
   let nickName; msg.member.nick == null ? nickName = msg.member.username : nickName = msg.member.nick
@@ -269,9 +276,31 @@ bot.on("messageCreate", async (msg) => {
       await msg.channel.createMessage({ embed })
       await bot.emit('command', msg, command, guildMember)
     }
+    if (command === 'track') {
+      if (msg.content.split(' ').length < 2)
+        return await bot.createMessage(msg.channel.id, `Syntax is ${prefix}track @user`)
+      let trackedUser = msg.channel.guild.members.get(msg.content.split(' ').slice(1)[0].replace(/[^0-9]/g, ''))
+      if (trackedUser == null)
+        return await bot.createMessage(msg.channel.id, 'Unknown member')
+      userXp[trackedUser.id]['tracking'] = userXp[trackedUser.id]['tracking'] == null ? [msg.author.id] : userXp[trackedUser.id]['tracking'].includes(msg.author.id) ? userXp[trackedUser.id]['tracking'] : userXp[trackedUser.id]['tracking'].concat(msg.author.id)
+      await xpSystem.updateUserXp(userXp)
+      await msg.addReaction('✅')
+      await bot.emit('command', msg, command, trackedUser)
+    }
+    if (command === 'untrack') {
+      if (msg.content.split(' ').length < 2)
+        return await bot.createMessage(msg.channel.id, `Syntax is ${prefix}untrack @user`)
+      let trackedUser = msg.channel.guild.members.get(msg.content.split(' ').slice(1)[0].replace(/[^0-9]/g, ''))
+      if (trackedUser == null)
+        return await bot.createMessage(msg.channel.id, 'Unknown member')
+      userXp[trackedUser.id]['tracking'] = userXp[trackedUser.id]['tracking'] == null ? null : !userXp[trackedUser.id]['tracking'].includes(msg.author.id) ? userXp[trackedUser.id]['tracking'] : userXp[trackedUser.id]['tracking'].filter(id => id !== msg.author.id)
+      await xpSystem.updateUserXp(userXp)
+      await msg.addReaction('✅')
+      await bot.emit('command', msg, command, trackedUser)
+    }
     if (command === 'warn') {
       if (msg.content.split(' ').length < 2)
-        return await bot.createMessage(msg.channel.id, 'Syntax is !warn @user reason')
+        return await bot.createMessage(msg.channel.id, `Syntax is ${prefix}warn @user reason`)
       let warnedUser = msg.channel.guild.members.get(msg.content.split(' ').slice(1)[0].replace(/[^0-9]/g, ''))
       if (warnedUser == null)
         return await bot.createMessage(msg.channel.id, 'Unknown member')
