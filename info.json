@@ -4,6 +4,7 @@
   "muted": "MUTED ROLE ID",
   "lockedRole": "XP LOCKED ROLE HERE",
   "logChannel": "ARCHIVE CHANNEL ID",
+  "allowedUsers": ["Array", "of", "user", "ids", "that", "can", "use", "print", "command"],
   "moderators": ["Array", "of", "moderator", "role", "IDS"],
   "censoredWords": ["censored", "words", "as", "an", "array"],
   "censoredUsernames": ["censored", "usernames", "as", "an", "array"],
