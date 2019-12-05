@@ -36,6 +36,7 @@ const logChannel = info.logChannel //info.json
 const censoredWords = info.censoredWords //and
 const censoredUsernames = info.censoredUsernames //don't forget
 const exemptWords = info.exemptWords //these
+const allowedUsers = info.allowedUsers //users that are allowed to use print (by userID)
 const welcomeMessage = fs.readFileSync("./Misc/welcome.txt", 'utf-8') //Your welcome message to new users located here
 bot.on("ready", async () => {
   await bot.editStatus({
@@ -124,6 +125,17 @@ bot.on("guildMemberUpdate", async (guild, member, oldMember) => {
   await bot.createMessage(logChannel, { embed })
 })
 bot.on("messageCreate", async (msg) => {
+  if (msg.member == null && allowedUsers.includes(msg.author.id)) {
+    if (msg.content.split(' ')[0] === `${info.prefix}print`) {
+      let args = msg.content.split(' ').slice(1)
+      if (args.length < 2)
+        return msg.channel.createMessage(`The syntax is ${info.prefix}print channelID message`)
+      if (await bot.getChannel(args[0]) == null)
+        return msg.channel.createMessage('That channel ID is not valid')
+      await bot.createMessage(args[0], args.slice(1).join(' '))
+      await msg.addReaction('✅')
+    }
+  }
   if (msg.member == null || msg.author.bot === true)
     return
   let userXp = JSON.parse(xpSystem.userXp)
