@@ -17,7 +17,7 @@ Xp system and Moderation Bot to secure your server
   - !slowmode [time in seconds] //default is 30 seconds
   - !timemute @user
   - !timeunmute @user
-  -!print channelID message
+  - !print channelID message
 # Install
   <div id="install">
   Git clone the repo
