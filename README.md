@@ -6,6 +6,7 @@ User commands
   - !rank [@user]
   - !rankcolor hexCode or "random"
   - !leaderboard
+  
 Mod Commands
   - !prefix newprefix
   - !del [amountofmsgs] (default 5)
