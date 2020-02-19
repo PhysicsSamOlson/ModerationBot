@@ -250,7 +250,7 @@ bot.on("messageCreate", async (msg) => {
     if (command === 'del') {
       let x = msg.content.split(' ')
       if (x[1] === '' || x[1] == null)
-        x[1] = '50' //default amount of msgs to delete is 50 if nothing is specified
+        x[1] = '5' //default amount of msgs to delete is 5 if nothing is specified
       x[1] = Math.floor(Number(x[1]))
       if (x[1] > 100)
         return await bot.createMessage(msg.channel.id, 'Sorry I can only delete up to 100 messages at a time')
