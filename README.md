@@ -2,9 +2,13 @@
 # Welcome to ModerationBot
 Xp system and Moderation Bot to secure your server
 # Commands
-  - !prefix newprefix
-  - !del [amountofmsgs] (default 50)
+User commands
   - !rank [@user]
+  - !rankcolor hexCode or "random"
+  - !leaderboard
+Mod Commands
+  - !prefix newprefix
+  - !del [amountofmsgs] (default 5)
   - !ban @user
   - !unban @user or userid
   - !warn @user or userid reason
@@ -12,8 +16,10 @@ Xp system and Moderation Bot to secure your server
   - !mute @user
   - !unmute @user
   - !user-info @user
-  - !leaderboard
+  - !track @user or userid
+  - !untrack @user or userid
   - !lock @user
+  - !unlock @user
   - !slowmode [time in seconds] //default is 30 seconds
   - !timemute @user
   - !timeunmute @user
