@@ -1,4 +1,5 @@
 
+# NOTE: This is my code, I had this old account, which I have now switched over to this account.
 # Welcome to ModerationBot
 Xp system and Moderation Bot to secure your server
 # Commands
