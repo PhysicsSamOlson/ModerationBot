@@ -145,8 +145,10 @@ bot.on("messageCreate", async (msg) => {
   if (userXp[msg.author.id] == null) {
     if (badToGood(msg.content, checkForMod(msg.member)))
       amountofXp = 0
+    setTimeout(async() => {
     userXp[msg.author.id] = { xp: amountofXp, time: Date.now(), lvl: 0, xpToLvl: 100 - amountofXp, totalXP: 100, user: `${msg.author.username}#${msg.author.discriminator}`, cooldown: Date.now() - 10000, xpColor: null, timemute: null, tracking: null }
     await xpSystem.updateUserXp(userXp)
+    }, 1500)
   }
   if (userXp[msg.author.id]['timemute'] != null) {
     await bot.addGuildMemberRole(msg.channel.guild.id, msg.member.id, muted, `Time Muted`);
